@@ -136,7 +136,7 @@ lemma sequentialLimit_unique (u : ℕ → ℝ) (l l' : ℝ) :
   rw [SequentialLimit] at hl hl'
   specialize hl (|l - l'| / 2) (by linarith)
   obtain ⟨N, hN⟩ := hl
-  obtain ⟨N', hN'⟩ := hl' (|l - l'| / 2) (by linarith)
+  obtain ⟨N', hN'⟩ := hl' (|l - l'| / 2)  (by linarith)
   let N₀ := max N N'
   specialize hN N₀ (Nat.le_max_left N N')
   specialize hN' N₀ (Nat.le_max_right N N')
@@ -155,20 +155,44 @@ lemma sequentialLimit_unique (u : ℕ → ℝ) (l l' : ℝ) :
 
 /- Prove the following without using `push_neg` or lemmas from the library.
 You will need to use `by_contra` in the proof. -/
-example {α : Type*} (p : α → Prop) : (∃ x, p x) ↔ (¬ ∀ x, ¬ p x) := by sorry
+example {α : Type*} (p : α → Prop) : (∃ x, p x) ↔ (¬ ∀ x, ¬ p x) := by
+  constructor
+  intro x'
+  obtain ⟨ x , hx ⟩ := x'
+  intro f
+  exact f x hx
+
 
 /- `simp` will be useful to simplify the goal. -/
-lemma convergesTo_const (a : ℝ) : SequentialLimit (fun n : ℕ ↦ a) a := by sorry
+lemma convergesTo_const (a : ℝ) : SequentialLimit (fun n : ℕ ↦ a) a := by
+  intro ε hε
+  use 0
+  intro n _
+  simp
+  exact hε
+
+
+
+
 
 /- The next exercise is harder, and you will probably not finish it during class. -/
 lemma SequentialLimit.add {s t : ℕ → ℝ} {a b : ℝ}
     (hs : SequentialLimit s a) (ht : SequentialLimit t b) :
-    SequentialLimit (fun n ↦ s n + t n) (a + b) := by sorry
+    SequentialLimit (fun n ↦ s n + t n) (a + b) := by
+    intro ε hε
+    specialize hs (ε / 2 ) (by linarith)
+    specialize ht (ε / 2 ) (by linarith)
+    obtain ⟨N₁ , hN₁ ⟩ := hs
+    obtain ⟨N₂ , hN₂ ⟩ := ht
 
-
-
-
-
+    use max N₁ N₂
+    intro n hn
+    specialize hN₁ n (le_of_max_le_left hn)
+    specialize hN₂ n (le_of_max_le_right hn)
+    calc |s n + t n - (a + b)|  = |(s n - a) + (t n - b)| := by ring
+    _ ≤ |s n - a| + |t n - b| := abs_add (s n - a) (t n - b)
+    _ < ε / 2 + ε / 2 := add_lt_add hN₁ hN₂
+    _ = ε := by ring
 
 
 /- # Sets
@@ -251,9 +275,9 @@ example : s ∩ t ⊆ s ∩ (t ∪ u) := by
     exact hx.2
 
 /- you can also prove it at thge level of sets, without talking about elements. -/
-example : s ∩ t ⊆ s ∩ (t ∪ u) := by
+lemma cap_subset_cap_cup : s ∩ t ⊆  (s ∪ u) ∩ t := by
   gcongr
-  exact subset_union_left t u
+  exact subset_union_left s u
 
 
 
@@ -278,7 +302,20 @@ example : s ∩ t = t ∩ s := by {
 }
 
 /- We can also use existing lemmas and `calc`. -/
-example : (s ∪ tᶜ) ∩ t = s ∩ t := by sorry
+example : (s ∪ tᶜ) ∩ t = s ∩ t := by
+  apply subset_antisymm
+  intro x hx
+  constructor
+  have xint : x ∈ t := hx.2
+  rcases hx.1 with h | h
+  exact h
+  exfalso
+  contradiction
+  exact hx.2
+  exact cap_subset_cap_cup _ _
+
+
+
 
 
 
@@ -292,7 +329,17 @@ def Evens : Set ℕ := {n : ℕ | Even n}
 
 def Odds : Set ℕ := {n | ¬ Even n}
 
-example : Evens ∪ Odds = univ := by sorry
+example : Evens ∪ Odds = univ := by
+  apply subset_antisymm
+  simp
+  intro x _
+  by_cases h : (Even x)
+  left
+  exact h
+  right
+  exact h
+
+
 
 
 
@@ -352,7 +399,39 @@ example (𝓒 : Set (Set α)) : ⋂₀ 𝓒 = {x : α | ∀ s ∈ 𝓒, x ∈ s}
 
 
 
-example (C : ι → Set α) (s : Set α) : s ∩ (⋃ i, C i) = ⋃ i, (C i ∩ s) := by sorry
+example (C : ι → Set α) (s : Set α) : s ∩ (⋃ i, C i) = ⋃ i, (C i ∩ s) := by
+  apply subset_antisymm
+  intro x hx
+  obtain ⟨Ci , hCi⟩ := hx.2
+  obtain ⟨ i , hi⟩ := hCi.1
+  have this : C i = Ci := hi
+  use Ci ∩ s
+  constructor
+  use i
+  simp
+  rw [this]
+  exact ⟨ hCi.2 , hx.1 ⟩
+
+  intro x hx
+  obtain ⟨ Cis , hCis ⟩ := hx
+  obtain ⟨ i , hi ⟩ := hCis.1
+  have this : C i ∩ s = Cis := hi
+  have q : x ∈ (C i ∩ s) := by
+    rw [this]
+    exact hCis.2
+  constructor
+  exact q.2
+  use C i
+  exact ⟨ ⟨ i , by rfl ⟩  , q.1 ⟩
+
+
+
+
+
+
+
+
+
 
 
 /- We can take images and preimages of sets.
@@ -365,4 +444,15 @@ example (f : α → β) (s : Set β) : f ⁻¹' s = { x : α | f x ∈ s } := by
 example (f : α → β) (s : Set α) : f '' s = { y : β | ∃ x ∈ s, f x = y } := by rfl
 
 
-example {s : Set α} {t : Set β} {f : α → β} : f '' s ⊆ t ↔ s ⊆ f ⁻¹' t := by sorry
+example {s : Set α} {t : Set β} {f : α → β} : f '' s ⊆ t ↔ s ⊆ f ⁻¹' t := by
+  constructor
+  intro φ
+  intro x hx
+  apply φ
+  use x
+  intro ψ
+  intro y hy
+  obtain ⟨x , hx⟩ := hy
+  rw [← hx.2]
+  apply ψ
+  exact hx.1

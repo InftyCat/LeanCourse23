@@ -39,11 +39,20 @@ The tactics for universal quantification and implication are the same.
 def NonDecreasing (f : ℝ → ℝ) := ∀ x₁ x₂ : ℝ, x₁ ≤ x₂ → f x₁ ≤ f x₂
 
 example (f g : ℝ → ℝ) (hg : NonDecreasing g) (hf : NonDecreasing f) :
-    NonDecreasing (g ∘ f) := by sorry
+    NonDecreasing (g ∘ f) := by {
+      intro x₁ x₂ hx
+      exact hg _ _ (hf _ _ (hx))
+
+    }
 
 /-- Note: `f + g` is the function defined by `(f + g)(x) := f(x) + g(x)` -/
 example (f g : ℝ → ℝ) (hf : NonDecreasing f) (hg : NonDecreasing g) :
-    NonDecreasing (f + g) := by sorry
+    NonDecreasing (f + g) := by {
+        intro x₁ x₂  hx
+        have hf' : f x₁ ≤ f x₂ := hf _ _ hx
+        have hg' : g x₁ ≤ g x₂ := hg _ _ hx
+        exact add_le_add hf' hg'
+    }
 
 
 
@@ -70,6 +79,8 @@ example (x : ℝ) : 0 ≤ x ^ 3 ↔ 0 ≤ x ^ 5 := by sorry
 
 
 
+
+
 /- ## Conjunction
 
 In Lean the conjunction of two statements `P` and `Q` is denoted by `P ∧ Q`, read as "P and Q".
@@ -85,7 +96,12 @@ Furthermore, we can decompose conjunction and equivalences.
   gives two new assumptions `hPQ : P → Q` and `hQP : Q → P`.
 -/
 
-example (p q r s : Prop) (h : p → r) (h' : q → s) : p ∧ q → r ∧ s := by sorry
+example (p q r s : Prop) (h : p → r) (h' : q → s) : p ∧ q → r ∧ s := by {
+  intro pq
+  constructor
+  exact h pq.1
+  exact h' pq.2
+}
 
 example (p q r : Prop) : (p → (q → r)) ↔ p ∧ q → r := by sorry
 
@@ -100,7 +116,11 @@ example (p q r : Prop) : (p → (q → r)) ↔ p ∧ q → r := by sorry
 In order to prove `∃ x, P x`, we give some `x₀` using tactic `use x₀` and
 then prove `P x₀`. This `x₀` can be any expression.
 -/
-example : ∃ n : ℕ, ∀ m : ℕ, m * n = m + m + m := by sorry
+example : ∃ n : ℕ, ∀ m : ℕ, m * n = m + m + m := by {
+    use 3
+    intro m
+    ring
+}
 
 
 /-
@@ -111,7 +131,15 @@ to fix one `x₀` that works.
 example {α : Type*} [PartialOrder α]
     (IsDense : ∀ x y : α, x < y → ∃ z : α, x < z ∧ z < y)
     (x y : α) (hxy : x < y) :
-    ∃ z₁ z₂ : α, x < z₁ ∧ z₁ < z₂ ∧ z₂ < y := by sorry
+    ∃ z₁ z₂ : α, x < z₁ ∧ z₁ < z₂ ∧ z₂ < y := by {
+
+    obtain ⟨z₁, h1z₁, h2z₁⟩ := IsDense x y hxy
+    obtain ⟨z₂ , h2z₂, h2z₂⟩ := IsDense z₁ y h2z₁
+    use z₁
+    use z₂
+    }
+
+
 
 
 

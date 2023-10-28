@@ -21,8 +21,8 @@ You can prove that two sets are equal by applying `subset_antisymm` or using the
 
 variable {α β : Type*} (x : α) (s t : Set α)
 
-example : (fun x : ℝ ↦ x ^ 2) 3 = 10 := by
-  simp only
+-- example : (fun x : ℝ ↦ x ^ 2) 3 = 10 := by
+--   simp only
 
 /- We saw last time that we can prove that two sets are equal using `ext`. -/
 example : s ∩ t = t ∩ s := by
@@ -205,15 +205,89 @@ example : ({1, 3, 5} : Set ℝ) + {0, 10} = {1, 3, 5, 11, 13, 15} := by
 
 /- # Exercises for the break. -/
 
-example {f : β → α} : f '' (f ⁻¹' s) ⊆ s := by sorry
+example {f : β → α} : f '' (f ⁻¹' s) ⊆ s := by
+  intro y hy
+  obtain ⟨ x , hx1 , hx2 ⟩ := hy
+  subst hx2
+  exact hx1
+example {f : β → α} (h : Surjective f) : s ⊆ f '' (f ⁻¹' s) := by
+  intro y hy
+  obtain ⟨ x , hx ⟩ := h y
+  subst hx
+  use x
+  exact ⟨ hy , rfl ⟩
 
-example {f : β → α} (h : Surjective f) : s ⊆ f '' (f ⁻¹' s) := by sorry
 
-example {f : α → β} (h : Injective f) : f '' s ∩ f '' t ⊆ f '' (s ∩ t) := by sorry
 
-example {I : Type*} (f : α → β) (A : I → Set α) : (f '' ⋃ i, A i) = ⋃ i, f '' A i := by sorry
 
-example : (fun x : ℝ ↦ x ^ 2) '' univ = { y : ℝ | y ≥ 0 } := by sorry
+
+
+example {f : α → β} (h : Injective f) : f '' s ∩ f '' t ⊆ f '' (s ∩ t) := by
+  intro y hy
+  obtain ⟨ x , hx ⟩ := hy.1
+  obtain ⟨ x' , hx' ⟩ := hy.2
+  have this : f x = f x' := by
+    trans y
+    exact hx.2
+    exact (symm hx'.2)
+  have this : x = x' := h this
+  use x
+  constructor
+  constructor
+  exact hx.1
+  subst this
+  exact hx'.1
+  exact hx.2
+
+
+
+example {I : Type*} (f : α → β) (A : I → Set α) : (f '' ⋃ i, A i) = ⋃ i, f '' A i := by
+  ext y
+  constructor
+  intro hy
+  obtain ⟨ x , hx , hx'⟩ := hy
+  obtain ⟨ Ai , hAi1 , hAi2 ⟩ := hx
+  obtain ⟨ i , hi ⟩ := hAi1
+  use f '' Ai
+  constructor
+  use i
+  subst hi
+  rfl
+  subst hx'
+  exact mem_image_of_mem f hAi2
+  intro hy
+  obtain ⟨ Ai , hAi1 , hAi2 ⟩ := hy
+  obtain ⟨ i , hi ⟩ := hAi1
+  have this : y ∈ f '' A i := by
+    subst hi
+    exact hAi2
+  obtain ⟨ x , hx1 , hx2⟩ := this
+  subst hx2
+  have this : x ∈ ⋃ (i : I) , A i := by
+    use A i
+    constructor
+    use i
+    exact hx1
+  exact mem_image_of_mem f this
+
+
+
+
+
+example : (fun x : ℝ ↦ x ^ 2) '' univ = { y : ℝ | y ≥ 0 } := by
+ ext y
+ constructor
+ intro hy
+ obtain ⟨ x , _ , hx⟩ := hy
+ subst hx
+ exact sq_nonneg x
+ intro hy
+ use sqrt y
+ constructor
+ exact trivial
+ simp
+ exact sq_sqrt hy
+
 
 
 /-
@@ -279,7 +353,33 @@ end Inverse
 
 Let's prove Cantor's theorem: there is no surjective function from any set to its power set. -/
 
-example : ¬ ∃ (α : Type*) (f : α → Set α), Surjective f := by sorry
+example : ¬ ∃ (α : Type*) (f : α → Set α), Surjective f := by
+  intro h
+  obtain ⟨ α , f , hf ⟩ := h
+  let my := { x | x ∉ f x}
+  obtain ⟨ x , hx ⟩ := hf my
+
+  by_cases q : (x ∈ f x )
+  have this : x ∉ my := by
+    simp
+    exact q
+  apply this
+  rw [← hx]
+  exact q
+  have this : x ∈ my := by
+     simp
+     exact q
+  apply q
+  rw [ hx]
+  exact this
+
+
+
+
+
+
+
+
 
 
 /- In section 4.3 of MIL you can read the proof of the Cantor-Schröder-Bernstein theorem. -/
