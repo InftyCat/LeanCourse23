@@ -126,20 +126,21 @@ lemma exercise3_4 : SequentialLimit (fun n ↦ 1 / (n+1)) 0 := by
   intro n hn
   simp
   rw [abs_inv]
-
-  apply (inv_lt _ _).2
-
-  {calc
+  let this := by { calc
   ε⁻¹ ≤ ⌈ε⁻¹⌉₊ := le_ceil ε⁻¹
   _ ≤ n := cast_le.mpr hn
   _ < ↑n + 1 := lt_add_one _
   _ ≤ |↑n + 1| := le_abs_self _
   }
-  {calc
-  0 < 1 := Real.zero_lt_one
-  1 ≤ ↑n + 1 := by sorry -- le_add_left _ _
-  _ ≤ |↑n + 1| := le_abs_self _
+  apply (inv_lt _ _).2
+
+
+  exact this
+  have this := by { calc
+    0 < ε⁻¹ := by exact inv_pos.mpr hε
+    _ < |↑n + 1| := this
   }
+  exact this
   {exact hε }
 
 
@@ -258,6 +259,12 @@ lemma exercise3_8 :
     intro hx
     simp
     by_contra contra
+    have me : |x| < 2 := by
+      apply abs_lt.2
+      push_neg at contra
+      exact contra
+
+
 
     have this : |x^2| < 2^2 := by
         rw [abs_pow x 2]
@@ -266,8 +273,12 @@ lemma exercise3_8 :
           simp
           simp
           exact zero_le_two
+          exact me
+        apply sq_lt_sq.2
+        simp
+        exact me
 
-        rw [@sq_lt_sq]
+
 
     have this : |x^2| < |x^2|:= by {
       calc
@@ -355,18 +366,85 @@ example (x y : α × β) : x = y ↔ x.1 = y.1 ∧ x.2 = y.2 := Prod.ext_iff
 lemma exercise3_9 {f : α → γ} {g : β → γ} (hf : Injective f) (hg : Injective g)
     (h1 : range f ∩ range g = ∅) (h2 : range f ∪ range g = univ) :
     ∃ (L : Set α × Set β → Set γ) (R : Set γ → Set α × Set β), L ∘ R = id ∧ R ∘ L = id := by
-  have h1' : ∀ x y, f x ≠ g y
+  have h1' : ∀ {x y}, f x ≠ g y
   · intro x y h
     apply h1.subset
     exact ⟨⟨x, h⟩, ⟨y, rfl⟩⟩
-  have h1'' : ∀ y x, g y ≠ f x
+  have h1'' : ∀ {y x}, g y ≠ f x
   · intro x y
     symm
     apply h1'
   have h2' : ∀ x, x ∈ range f ∪ range g := eq_univ_iff_forall.1 h2
-  have hf' : ∀ x x', f x = f x' ↔ x = x' := fun x x' ↦ hf.eq_iff
+  have hf' : ∀ {x x'}, f x = f x' ↔ x = x' := fun {x x'} ↦ hf.eq_iff
   let L : Set α × Set β → Set γ :=
-    fun (s, t) ↦ sorry
+    fun (s, t) ↦ f '' s ∪ g '' t
   let R : Set γ → Set α × Set β :=
-    fun s ↦ sorry
-  sorry
+    fun s ↦ (f ⁻¹' s , g ⁻¹' s)
+  use L
+  use R
+  constructor
+  ext y y'
+  constructor
+  intro hy
+  obtain ⟨z,hz⟩  |⟨z,hz⟩  := h2' y'
+  simp
+  simp at hy
+  obtain ⟨x , hx1 , hx2⟩| ⟨x , hx1 , hx2⟩ := hy
+  rw [← hx2]
+  exact hx1
+  rw [← hx2]
+  exact hx1
+  obtain ⟨x , hx1 , hx2⟩| ⟨x , hx1 , hx2⟩ := hy
+  rw [← hx2]
+  exact hx1
+  rw [← hx2]
+  exact hx1
+
+  intro hy
+  simp at hy
+  simp
+
+  obtain ⟨z,hz⟩  |⟨z,hz⟩  := h2' y'
+  left
+  use z
+  constructor
+  rw [hz]
+  exact hy
+  exact hz
+  right
+  use z
+  constructor
+  rw [hz]
+  exact hy
+  exact hz
+
+  ext ⟨y1 , y2⟩  y'
+  constructor
+  intro hy'
+  simp at hy'
+  simp
+  obtain ⟨x , hx1 , hx2⟩| ⟨x , hx1 , hx2⟩ := hy'
+  have this : x = y' := hf'.1 hx2
+  rw [← this]
+  exact hx1
+  exfalso
+  apply h1''
+  exact hx2
+  simp
+  intro hy'
+  left
+  use y'
+  constructor
+  simp
+  intro ass
+  obtain ⟨ x , hx ⟩ | ⟨x , hx ⟩ := ass
+  exfalso
+  apply h1'
+  exact hx.2
+  have this : x = y' := hg hx.2
+  rw [← this]
+  exact hx.1
+  simp
+  intro hy'
+  right
+  use y'
