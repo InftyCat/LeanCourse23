@@ -1,4 +1,5 @@
 # Bonn Lean Course WiSe 23/24
+Name : Tim Lichtnau
 
 ## In this repository
 

@@ -158,13 +158,53 @@ def fib : ℕ → ℕ
 
 /- ## Exercises -/
 
-example : ∑ i in range n, fib (2 * i + 1) = fib (2 * n) := by sorry
+example : ∑ i in range n, fib (2 * i + 1) = fib (2 * n) := by {
+  induction n
+  case zero => simp
+  case succ k ih =>
+    rw[sum_range_succ, ih]
+    ring
+    symm
+    calc
+    fib (2 + k * 2) = fib (k * 2 + 2) := by rw [add_comm]
+    _ = fib (k * 2 + 1) + fib (k * 2) := rfl
+    _ = fib (k * 2) + fib (1 + k * 2) := by ring
 
-example : (∑ i in range n, fib i : ℤ) = fib (n + 1) - 1 := by sorry
 
-example : 6 * ∑ i in range (n + 1), i ^ 2 = n * (n + 1) * (2 * n + 1) := by sorry
 
-example : (∑ i in range (n + 1), i ^ 3 : ℚ) = (n * (n + 1) / 2 : ℚ) ^ 2 := by sorry
+}
+
+example : (∑ i in range n, fib i : ℤ) = fib (n + 1) - 1 := by
+  induction n
+  case zero => simp
+  case succ k ih =>
+  rw [sum_range_succ , ih]
+
+
+  have this : (fib (k + 1))  + (fib k) - 1 = fib (k + 1 + 1) -1 := rfl
+  rw [add_comm]
+
+
+
+
+
+
+
+
+
+
+example : 6 * ∑ i in range (n + 1), i ^ 2 = n * (n + 1) * (2 * n + 1) := by
+  induction n
+  case zero => simp
+  case succ k ih =>
+  rw [sum_range_succ ]
+  rw [left_distrib, ih]
+  ring
+
+example : (∑ i in range (n + 1), i ^ 3 : ℚ) = (n * (n + 1) / 2 : ℚ) ^ 2 := by
+  apply mul_eq_mul_left_iff.2
+
+
 
 example (n : ℕ) : fac (2 * n) = fac n * 2 ^ n * ∏ i in range n, (2 * i + 1) := by sorry
 

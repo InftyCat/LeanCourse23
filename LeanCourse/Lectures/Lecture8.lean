@@ -325,7 +325,7 @@ def IntGroup : AbelianGroup where
   zero := 0
   add_zero := by simp
   neg := fun a ↦ -a
-  add_neg := by exact?
+  add_neg := fun x => Int.add_right_neg x
 
 lemma AbelianGroup.zero_add (g : AbelianGroup) (x : g.G) :
     g.add g.zero x = x := by
@@ -383,12 +383,28 @@ Lean will provide them automatically by searching the corresponding database.
 instance AbelianGroup'.prod (G G' : Type*) [AbelianGroup' G] [AbelianGroup' G'] :
     AbelianGroup' (G × G') where
   add := fun a b ↦ (a.1 +' b.1, a.2 +' b.2)
-  comm := sorry
-  assoc := sorry
+  comm := by
+    intro ⟨ a , a' ⟩ (b , b')
+    simp
+    constructor <;> rw [comm]
+
+  assoc := by
+    intro ⟨ a , a' ⟩ (b , b') ⟨ c , c'⟩
+    simp
+    constructor <;> rw [assoc]
+
   zero := (𝟘, 𝟘)
-  add_zero := sorry
+  add_zero := by
+    intro ⟨x , x'⟩
+    simp
+    constructor <;> rw [add_zero]
   neg := fun a ↦ (-' a.1, -' a.2)
-  add_neg := sorry
+  add_neg := by
+    intro ⟨ x , x'⟩
+    simp
+    constructor <;> rw [add_neg]
+
+
 
 set_option trace.Meta.synthInstance true in
 #eval ((2, 3) : ℤ × ℤ) +' (4, 5)
@@ -426,9 +442,15 @@ example (x : ℝ) : x * 1 = x := mul_one x
 
 
 /- ## Exercises -/
-
+structure StrictBipointedType where
+  T : Type*
+  x₀ : T
+  x₁ : T
+  h : x₀ ≠ x₁
+lemma mylemma : { ⟨ X , x₀ , x₁ , h ⟩ : StrictBipointedType } → ∀ z : X , z ≠
 /- 1. Define the structure of "strict bipointed types", i.e. a type together with 2 unequal points
 `x₀ ≠ x₁` in it.
+
 Then state and prove the lemma that for any object in this class we have `∀ z, z ≠ x₀ ∨ z ≠ x₁.` -/
 
 
@@ -446,7 +468,8 @@ constant gives another Pythagorean triple. -/
 
 /- 4. Prove that triples of equivalent types are equivalent. -/
 
-example (α β : Type*) (e : α ≃ β) : Triple α ≃ Triple β := sorry
+example (α β : Type*) (e : α ≃ β) : Triple α ≃ Triple β := by
+
 
 
 /- 5. Show that if `G` is an abelian group then triples from elements of `G` is an abelian group. -/
