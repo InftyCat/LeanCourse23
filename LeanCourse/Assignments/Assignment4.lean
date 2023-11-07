@@ -23,7 +23,33 @@ local macro_rules | `($x ^ $y) => `(HPow.hPow $x $y)
 
 open Nat Finset BigOperators in
 lemma exercise4_1 (n : ℕ) :
-    (∑ i in range (n + 1), i ^ 3 : ℚ) = (∑ i in range (n + 1), i : ℚ) ^ 2 := by sorry
+    (∑ i in range (n + 1), i ^ 3 : ℚ) = (∑ i in range (n + 1), i : ℚ) ^ 2 := by {
+
+      have gauss : ∀ n , (∑ i in range (n + 1), i : ℚ) = (n * (n + 1)) / 2 := by {
+        intro n
+        induction n
+        case zero => simp
+        case succ k ih =>
+          rw [sum_range_succ, ih]
+          push_cast
+          ring
+      }
+
+
+      induction n
+      case zero => simp
+      case succ n ih =>
+        rw [sum_range_succ , ih]
+
+        rw [sum_range_succ _ (n+1)]
+
+        rw [gauss]
+        field_simp
+        ring
+
+    }
+
+
 
 open Set in
 /-
@@ -36,7 +62,13 @@ original sequence.
 lemma exercise4_2 {ι α : Type*} [LinearOrder ι] [wf : WellFoundedLT ι] (A C : ι → Set α)
   (hC : ∀ i, C i = A i \ ⋃ j < i, A j) : Pairwise (Disjoint on C) ∧ ⋃ i, C i = ⋃ i, A i := by
   have h := wf.wf.has_min
-  sorry
+  constructor
+
+  intro x y hxy t ht1 ht2
+
+
+
+
 
 
 /-- Let's prove that the positive reals form a group under multiplication.
