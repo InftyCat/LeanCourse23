@@ -14,16 +14,17 @@ variable {𝕏 : Type u₂} {B : Type u₁} [Category.{v₁} B] [Category.{v₂}
 namespace FiberedCategories
 
 def comp {X Y Z : B}  : (X ⟶ Y) → (Y ⟶ Z ) → (X ⟶ Z) := fun f g => f ≫ g
-def univ {Y Z : B} (h : Y = Z) : Y ⟶ Z := by rw [h] ; exact 𝟙 Z
-def substCod {X Y Z : B} (h : Y = Z) (f : X ⟶ Y) : (X ⟶ Z) := f ≫univ h -- by rw [← h]  ; exact f
-def substDom {X Y Z : B} (h : X = Y) (f : Y ⟶ Z) : (X ⟶ Z) := univ h ≫ f -- by rw [h]  ; exact f
+
+def substCod {X Y Z : B} (h : Y = Z) (f : X ⟶ Y) : (X ⟶ Z) := f ≫ CategoryTheory.eqToHom h -- by rw [← h]  ; exact f
+def substDom {X Y Z : B} (h : X = Y) (f : Y ⟶ Z) : (X ⟶ Z) := CategoryTheory.eqToHom h ≫ f -- by rw [h]  ; exact f
 
 
-def isCartesian {X Y : 𝕏} (φ : Y ⟶ X) := ∀ {Z : 𝕏} (v : P.obj Z ⟶ P.obj Y) (θ : Z ⟶ X) , ∃! (ψ : Z ⟶ Y) , P.map ψ = v ∧ ψ ≫ φ = θ
+
 
 def obj_over (A : B) := {X : 𝕏 // P.obj X = A}
+instance : CoeSort (obj_over (P:=P) A) 𝕏 := ⟨fun α ↦ α.1⟩
 def over_hom {A A' : B} (u : A ⟶ A') (X : obj_over (P:=P) A) (X' : obj_over (P:=P) A') := {α : X.1 ⟶ X'.1 //
-   P.map α ≫ univ X'.2  = univ X.2 ≫ u }
+   P.map α ≫ CategoryTheory.eqToHom X'.2  = CategoryTheory.eqToHom X.2 ≫ u }
 
 
 instance Fib : Category (obj_over ( P:= P) A) where
@@ -40,11 +41,32 @@ instance Fib : Category (obj_over ( P:= P) A) where
     rw [f.2]
     aesop_cat
      ⟩
-structure cartesianLift {J I : B} (u : J ⟶ I) ( X : obj_over (P:=P) I) where
+structure liftOfAlong {J I : B} ( X : obj_over (P:=P) I) (u : J ⟶ I)  where
   Y : obj_over (P:=P) J
   φ : over_hom u Y X
-  isCart : isCartesian (P := P) φ.1
-def fibration := ∀ {J I : B} (u : J ⟶ I) (X : obj_over I) , cartesianLift ( P:=P) u X
+def isHyperCartesian {J I : B} {u : J ⟶ I} {X : obj_over (P:=P) I} (τ: liftOfAlong X u):=
+  ∀ {K : B} (v : K ⟶ J) (L: liftOfAlong X (v ≫u )) ,
+    ∃! ψ : over_hom v L.Y τ.Y , ψ.1 ≫ τ.2.1 = L.φ.1
+def isCartesian {J I : B} {u : J ⟶ I} {X : obj_over (P:=P) I} (τ: liftOfAlong X u):=
+  ∀ (L: liftOfAlong X (𝟙 J  ≫u )) ,
+    ∃! ψ : L.Y  ⟶ τ.Y , ψ.1 ≫ τ.2.1 = L.φ.1
+def cartesianLiftOfAlong {J I : B} ( X : obj_over (P:=P) I) (u : J ⟶ I) := {L : liftOfAlong X u // isCartesian L }
+theorem cartesianLiftIsUnique {J I : B} {u : J ⟶ I} {X : obj_over (P:=P) I} (L L' : cartesianLiftOfAlong X u) :
+  ∃! α : L'.1.Y ≅ L.1.Y , α.hom.1 ≫ L.1.φ.1 = L'.1.φ.1 := by
+    obtain ⟨Y , φ⟩ := L.1
+    obtain ⟨Z , ψ⟩ := L'.1
+    have this := L.2 -- (𝟙 _)
+    have me := Category.id_comp u
+    have Y' : liftOfAlong X (𝟙 J ≫ u):= by rw [me] ; exact L'.1
+
+    -- specialize L.2 L'.1
+    obtain ⟨ α , hα  ⟩ := this
+    have α : Z ⟶ Y := by sorry
+    let α : Z ≅ Y  := ⟨ α , by sorry , by sorry, by sorry ⟩
+
+    use α
+
+def fibration := ∀ {J I : B} (u : J ⟶ I) (X : obj_over I) , cartesianLiftOfAlong ( P:=P) X u
 
 
 end FiberedCategories
