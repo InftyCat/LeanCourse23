@@ -44,24 +44,56 @@ instance Fib : Category (obj_over ( P:= P) A) where
 structure liftOfAlong {J I : B} ( X : obj_over (P:=P) I) (u : J ⟶ I)  where
   Y : obj_over (P:=P) J
   φ : over_hom u Y X
-def isHyperCartesian {J I : B} {u : J ⟶ I} {X : obj_over (P:=P) I} (τ: liftOfAlong X u):=
+def isCartesian {J I : B} {u : J ⟶ I} {X : obj_over (P:=P) I} (τ: liftOfAlong X u):=
   ∀ {K : B} (v : K ⟶ J) (L: liftOfAlong X (v ≫u )) ,
     ∃! ψ : over_hom v L.Y τ.Y , ψ.1 ≫ τ.2.1 = L.φ.1
-def isCartesian {J I : B} {u : J ⟶ I} {X : obj_over (P:=P) I} (τ: liftOfAlong X u):=
-  ∀ (L: liftOfAlong X (𝟙 J  ≫u )) ,
-    ∃! ψ : L.Y  ⟶ τ.Y , ψ.1 ≫ τ.2.1 = L.φ.1
+def isWeakCartesian {J I : B} {u : J ⟶ I} {X : obj_over (P:=P) I} (τ: liftOfAlong X u):= ∀ (L : liftOfAlong X u) ,
+  ∃! ψ : L.Y ⟶ τ.Y , ψ.1 ≫ τ.2.1 = L.φ.1
+
+
+
 def cartesianLiftOfAlong {J I : B} ( X : obj_over (P:=P) I) (u : J ⟶ I) := {L : liftOfAlong X u // isCartesian L }
+def transLift {K J I : B} {v : K ⟶ J } {u : J ⟶ I} {X : obj_over I}
+  (α : liftOfAlong X u)
+  (β : liftOfAlong (α.Y) v )
+  : liftOfAlong ( P:=P) X (v ≫ u ) where
+  Y := β.Y
+  φ := ⟨ β.φ.1 ≫ α.φ.1 , by rw [@Functor.map_comp, Category.assoc , α.φ.2 , ← Category.assoc , β.φ.2] ; aesop_cat ⟩
+
+def weakCartifCartesian {J I : B} {u : J ⟶ I} {X : obj_over (P:=P) I} {τ: liftOfAlong X u} (isCart : isCartesian τ) : isWeakCartesian τ := by
+  intro L
+  -- obtain ⟨Y , ϕ⟩ := L
+
+  let τ' : liftOfAlong X (𝟙 J ≫ u) := transLift L (⟨ L.Y , 𝟙 (L.Y)  ⟩  )
+
+  specialize isCart (𝟙 J) τ'
+  obtain ⟨ψ, hψ ⟩:= isCart
+  have LeqPsiTau : ψ.1 ≫ τ.φ.1 = L.φ.1 := by
+    rw [hψ.1]
+    apply Category.id_comp
+  -- have ρ : L.Y ⟶ τ'.Y := 𝟙 (L.Y)
+  use ψ
+  simp
+  simp at hψ
+  constructor
+  exact LeqPsiTau
+  intro ψ' hψ'
+  apply hψ.2
+  rw [← hψ.1, hψ' , ← LeqPsiTau]
+
 theorem cartesianLiftIsUnique {J I : B} {u : J ⟶ I} {X : obj_over (P:=P) I} (L L' : cartesianLiftOfAlong X u) :
   ∃! α : L'.1.Y ≅ L.1.Y , α.hom.1 ≫ L.1.φ.1 = L'.1.φ.1 := by
     obtain ⟨Y , φ⟩ := L.1
     obtain ⟨Z , ψ⟩ := L'.1
-    have this := L.2 -- (𝟙 _)
+    have this := L.2 (𝟙 _)
     have me := Category.id_comp u
-    have Y' : liftOfAlong X (𝟙 J ≫ u):= by rw [me] ; exact L'.1
+    have Z' : liftOfAlong X (𝟙 J ≫ u):= by apply transLift ; exact ⟨ Z , by sorry ⟩ ; exact L'.1 -- by rw [me] ; exact L'.1
+    have helper : Z'.Y = Z := by trans L'.1.1 ; sorry ; sorry
+    specialize this Z'
 
-    -- specialize L.2 L'.1
     obtain ⟨ α , hα  ⟩ := this
-    have α : Z ⟶ Y := by sorry
+
+    have α : Z ⟶ Y := ⟨ by sorry , by sorry ⟩
     let α : Z ≅ Y  := ⟨ α , by sorry , by sorry, by sorry ⟩
 
     use α
