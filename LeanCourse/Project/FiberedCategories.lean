@@ -1,12 +1,12 @@
 
-import Mathlib.CategoryTheory.Functor.Currying
-import Mathlib.CategoryTheory.Products.Basic
+--import Mathlib.CategoryTheory.Functor.Currying
+--import Mathlib.CategoryTheory.Products.Basic
 import Mathlib.CategoryTheory.Over
 set_option autoImplicit true
 
 namespace CategoryTheory
 
-open Opposite
+--open Opposite
 
 universe v₁ u₁ --v₂ u₁ u₂
 -- morphism levels before object levels. See note [CategoryTheory universes].
@@ -43,7 +43,7 @@ instance : Category (obj_over ( P:= P) A) where
     rw [f.2]
     aesop_cat
      ⟩
-     --check axioms
+     -- axioms are automatically checked :D
 
 structure liftOfAlong {J I : B} ( X : obj_over (P:=P) I) (u : J ⟶ I)  where
   Y : obj_over (P:=P) J
@@ -160,36 +160,73 @@ def cartesianFunctor
   (P Q : fibration B) := {F : P.1 ⟶ Q.1 //
     ∀ {X Y : P.1.1} (φ : X ⟶ Y) (_ : isCartesianMorphism P.1 φ) ,
        isCartesianMorphism Q.1 (F.left.map φ)  }
-scoped infixr:80 " ⥤c   " => cartesianFunctor -- type as \gg
+scoped infixr:80 " ⥤c   " => cartesianFunctor
 instance {P Q : fibration B} : CoeOut (P ⥤c Q) (P.1.1 ⥤ Q.1.1) := ⟨fun α ↦ α.1.left⟩
-def overFunctorPreservesFibers {P Q : fibration B} (F : P ⥤c Q) (A : B) :
+def objMappingBetweenFibers {P Q : fibration B} (F : P ⥤c Q) (A : B) : obj_over (P:=P.1.hom) A → obj_over (P:=Q.1.hom) A := by
+  intro X
+  use (F : P.1.1 ⥤ Q.1.1).obj X.1
+
+  trans (F.1.1 ≫ Q.1.hom).obj X.1 ; rfl ;
+  have this : F.1.1 ≫ Q.1.hom = P.1.hom := F.1.3 ;
+  rw [this]
+  exact X.2
+
+variable {P Q : fibration B} {F G : P ⥤c Q}
+def toFunctorOnFibers (F : P ⥤c Q) (A : B) :
   Functor (obj_over (P := P.1.hom) A) (obj_over (P := Q.1.hom) A) where
-    obj := fun X ↦ by
-      use (F : P.1.1 ⥤ Q.1.1).obj X.1
-      trans (P.1.hom).obj X
-      · let FQ : P.1.1 ⟶ B := F.1.1 ≫ Q.1.hom
-        trans FQ.obj X.1 ; rfl ;
-        have this : FQ = P.1.hom := F.1.3 ;
-        rw [this]
-      · exact X.2
+    obj := objMappingBetweenFibers F A
+
     map := fun {X Y} (f : X ⟶ Y) ↦ by
       use (F.1.left).map f.1
       simp
       let FQ : P.1.1 ⟶ B := F.1.1 ≫ Q.1.hom
       have this : FQ = P.1.hom := F.1.3 ;
-      trans (FQ.map f.1 ≫ eqToHom _)
-
-
-
-
+      have myEq : (F.1.1 ≫ Q.1.hom).obj Y.1 = A := (objMappingBetweenFibers F A Y).2
+      trans (FQ.map f.1 ≫ eqToHom myEq)
+      rfl
+      let myEq1 (Z : obj_over (P:=P) A) : FQ.obj Z.1 = P.1.hom.obj Z.1 := by rw [this]
+      have myNat : FQ ⟶ P.1.hom := eqToHom F.1.3
+      have this {Y : obj_over A} : eqToHom (myEq1 Y) = myNat.app Y.1 := by sorry
+      have EqEq : myEq = _root_.trans (myEq1 Y) Y.2 := rfl
+      have EqHom : eqToHom myEq = eqToHom (myEq1 Y) ≫ eqToHom Y.2 := by rw [EqEq] ; rw [eqToHom_trans]
+      rw [EqHom, ← Category.assoc , this ,  myNat.naturality , Category.assoc , f.2 , Category.comp_id , ← this  , eqToHom_trans]
     map_id := by sorry
     map_comp := by sorry
 
+scoped infixr:80 " / " => toFunctorOnFibers
+
+lemma check {A : B} (F : P ⥤c Q) (X : obj_over A) : ((F / A).obj X).1 = F.1.left.obj X.1 := rfl
 
 
-def cartesianNaturalTrafo {P Q : fibration B}
+def rewrittenTrafo (η : F.1.left ⟶G ) {A : B} (T : obj_over (P:=P.1.hom) A) : ↑((F / A).obj T).1 ⟶ ↑((G / A).obj T).1 :=
+  (by rw [check , check] ; exact (η.app T.1))
+def cartesianNatTrans {P Q : fibration B}
   (F G : P ⥤c Q)
-  (η : undFuncMor F.1 ⟶ G) := ∀ {X : P.1.1} , η.app X
+  := { η : F.1.left ⟶ G // ∀ {A : B} {T : obj_over (P :=P.1.hom) A} ,
+  isVertical (X:=(F / A).obj T) (X':=(G / A).obj T) (rewrittenTrafo η T) }
+scoped infixr:80 " =>c " => cartesianNatTrans
+--def cartNatTrans := ∀ (A : B) , F / A ⟶ G / A
+instance : Category (P ⥤c Q) where
+  Hom := fun F G ↦ F =>c G
+  id := fun F ↦ ⟨  𝟙 F.1.1 , by sorry ⟩
+  comp := fun F G ↦ ⟨ F.1 ≫ G.1 , by sorry ⟩
+def trafoOnFibers (η : F =>c G) (A : B) : F / A ⟶ G / A where
+  app := by
+    obtain  ⟨ η : F.1.left ⟶ G , isCart ⟩ := η
+    intro X
+    use rewrittenTrafo η X ;
+    rw [isCart]
+    aesop
+  naturality := by sorry
+instance : Bicategory (fibration B) where
+  Hom := fun P Q ↦ P ⥤c Q
+  id := fun P ↦ by use 𝟙 P.1 ; sorry
+  comp := fun {P Q R} F G ↦ ⟨ F.1 ≫ G.1 , by sorry ⟩
 
 
+  whiskerLeft := by sorry
+  whiskerRight := by sorry
+  associator := by sorry
+  leftUnitor := by sorry
+  rightUnitor := by sorry
 end FiberedCategories
