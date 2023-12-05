@@ -2,6 +2,7 @@
 --import Mathlib.CategoryTheory.Functor.Currying
 --import Mathlib.CategoryTheory.Products.Basic
 import Mathlib.CategoryTheory.Over
+import Mathlib.CategoryTheory.EqToHom
 set_option autoImplicit true
 
 namespace CategoryTheory
@@ -23,28 +24,31 @@ def substDom {X Y Z : B} (h : X = Y) (f : Y ⟶ Z) : (X ⟶ Z) := CategoryTheory
 
 def obj_over (A : B) := {X : 𝕏 // P.obj X = A}
 instance : CoeOut (obj_over (P:=P) A) 𝕏 := ⟨fun α ↦ α.1⟩
-def isVertical {X X' : obj_over (P:=P) A} (α : X.1 ⟶ X') := P.map α ≫ CategoryTheory.eqToHom X'.2  = CategoryTheory.eqToHom X.2
+@[simp] def isVertical {X X' : obj_over (P:=P) A} (α : X.1 ⟶ X') := P.map α ≫ CategoryTheory.eqToHom X'.2  = CategoryTheory.eqToHom X.2
 def over_hom {A A' : B} (u : A ⟶ A') (X : obj_over (P:=P) A) (X' : obj_over (P:=P) A') :=
   {α : X.1 ⟶ X' //
    P.map α ≫ CategoryTheory.eqToHom X'.2  = CategoryTheory.eqToHom X.2 ≫ u }
 
+def compPresVertical {X Y Z : obj_over (P:=P) A} (f : X.1 ⟶Y.1 ) (g : Y.1 ⟶ Z.1) (p : isVertical f) (q : isVertical g) :
+  isVertical (f ≫ g ) := by
+    rw [isVertical, @Functor.map_comp]
+    rw [Category.assoc]
+    rw [q]
+    rw [p]
 
 instance : Category (obj_over ( P:= P) A) where
-  Hom ( X X' : obj_over A) := over_hom (𝟙 A) X X' -- { α : verticalOver A // α.X = X ∧ α.X' = X' }
+  Hom ( X X' : obj_over A) := { α : X.1 ⟶ X'.1 // isVertical (X:=X) (X':=X') α } -- over_hom (𝟙 A) X X' -- { α : verticalOver A // α.X = X ∧ α.X' = X' }
   id (X : obj_over A) := ⟨ 𝟙 X.1 , by
-    rw [@Functor.map_id]
+    rw [isVertical, Functor.map_id]
     aesop_cat
     ⟩
-  comp {X} {Y} {Z} f g := ⟨  f.1 ≫ g.1 , by
-    rw [@Functor.map_comp]
-    rw [Category.assoc]
-    rw [g.2]
-    rw [← Category.assoc]
-    rw [f.2]
-    aesop_cat
+  comp {X} {Y} {Z} f g := ⟨  f.1 ≫ g.1 , compPresVertical f.1 g.1 f.2 g.2
      ⟩
-     -- axioms are automatically checked :D
 
+
+     -- axioms are automatically checked :D
+@[simp] def coerc { X X' : obj_over A} (f : over_hom (P:=P) (𝟙 A) X X') : X ⟶ X' := ⟨ f.1 , by rw [isVertical, f.2] ; aesop ⟩
+@[simp] def coercBack {X X' : obj_over A} (f : X ⟶ X') : over_hom (P:=P) (𝟙 A) X X' := ⟨ f.1 , by rw [f.2] ; aesop⟩
 structure liftOfAlong {J I : B} ( X : obj_over (P:=P) I) (u : J ⟶ I)  where
   Y : obj_over (P:=P) J
   φ : over_hom u Y X
@@ -81,20 +85,28 @@ def transLift {K J I : B} {v : K ⟶ J } {u : J ⟶ I} {X : obj_over I}
 def weakCartifCartesian {J I : B} {u : J ⟶ I} {X : obj_over (P:=P) I} (τ: cartesianLiftOfAlong X u) : isWeakCartesian τ.1 := by
   intro L
   --obtain ⟨ τ , isCart ⟩:= τ
-  let τ' : liftOfAlong X (𝟙 J ≫ u) := transLift L (⟨ L.Y , 𝟙 (L.Y)  ⟩  )
+  let τ' : liftOfAlong X (𝟙 J ≫ u) := transLift L (⟨ L.Y , by apply coercBack ; exact 𝟙 _  ⟩  )
   obtain ⟨ψ, hψ ⟩:= τ.isCart (𝟙 J) τ'
   have LeqPsiTau : ψ.1 ≫ τ.φ.1 = L.φ.1 := by
     rw [hψ.1]
     apply Category.id_comp
   -- have ρ : L.Y ⟶ τ'.Y := 𝟙 (L.Y)
-  use ψ
+  use (coerc ψ)
   simp
   simp at hψ
   constructor
   exact LeqPsiTau
   intro ψ' hψ'
-  apply hψ.2
-  rw [← hψ.1, hψ' , ← LeqPsiTau]
+  have this : coercBack ψ' = ψ := by
+    apply hψ.2
+    rw [← hψ.1 ]
+    rw [coercBack]
+    simp
+    rw [hψ' , ← LeqPsiTau]
+  apply Subtype.ext
+  simp
+  rw [← this]
+  simp
 
 theorem cartesianLiftIsUnique {J I : B} {u : J ⟶ I} {X : obj_over (P:=P) I} (L  L' : cartesianLiftOfAlong X u) :
   ∃! α : L'.1.Y ≅ L.1.Y , α.hom.1 ≫ L.1.φ.1 = L'.1.φ.1 := by
@@ -160,7 +172,9 @@ def cartesianFunctor
   (P Q : fibration B) := {F : P.1 ⟶ Q.1 //
     ∀ {X Y : P.1.1} (φ : X ⟶ Y) (_ : isCartesianMorphism P.1 φ) ,
        isCartesianMorphism Q.1 (F.left.map φ)  }
+
 scoped infixr:80 " ⥤c   " => cartesianFunctor
+@[ext] lemma extCartFunctor {P Q : fibration B} (F G : P ⥤c Q) (p : F.1 = G.1) : F = G := Subtype.ext p
 instance {P Q : fibration B} : CoeOut (P ⥤c Q) (P.1.1 ⥤ Q.1.1) := ⟨fun α ↦ α.1.left⟩
 def objMappingBetweenFibers {P Q : fibration B} (F : P ⥤c Q) (A : B) : obj_over (P:=P.1.hom) A → obj_over (P:=Q.1.hom) A := by
   intro X
@@ -189,27 +203,58 @@ def toFunctorOnFibers (F : P ⥤c Q) (A : B) :
       have this {Y : obj_over A} : eqToHom (myEq1 Y) = myNat.app Y.1 := by sorry
       have EqEq : myEq = _root_.trans (myEq1 Y) Y.2 := rfl
       have EqHom : eqToHom myEq = eqToHom (myEq1 Y) ≫ eqToHom Y.2 := by rw [EqEq] ; rw [eqToHom_trans]
-      rw [EqHom, ← Category.assoc , this ,  myNat.naturality , Category.assoc , f.2 , Category.comp_id , ← this  , eqToHom_trans]
+      rw [EqHom, ← Category.assoc , this ,  myNat.naturality , Category.assoc , f.2 ]
+      rw [← this  , eqToHom_trans]
     map_id := by sorry
     map_comp := by sorry
 
 scoped infixr:80 " / " => toFunctorOnFibers
 
-lemma check {A : B} (F : P ⥤c Q) (X : obj_over A) : ((F / A).obj X).1 = F.1.left.obj X.1 := rfl
+@[simp] lemma check {A : B} (F : P ⥤c Q) (X : obj_over A) : ((F / A).obj X).1 = F.1.left.obj X.1 := rfl
 
 
-def rewrittenTrafo (η : F.1.left ⟶G ) {A : B} (T : obj_over (P:=P.1.hom) A) : ↑((F / A).obj T).1 ⟶ ↑((G / A).obj T).1 :=
-  (by rw [check , check] ; exact (η.app T.1))
+@[simp] def rewrittenTrafo (η : F.1.left ⟶G ) {A : B} (T : obj_over (P:=P.1.hom) A) : ↑((F / A).obj T).1 ⟶ ↑((G / A).obj T).1 :=
+ eqToHom (symm $ check F T)  ≫  (η.app T.1) ≫  eqToHom (check G _)
+-- def
+/- def whiskerRewrittenTrafo (η : F.1.left ⟶G ) {A : B} (T : obj_over (P:=P.1.hom) A) : (P.1 ⟶ P.1) :=
+  (by sorry) ≫ whiskerLeft Q.1 η ≫ (by sorry)
+ def rewTrafoDef  (η : F.1.left ⟶G ) {A : B} (T : obj_over (P:=P.1.hom) A) : eqToHom (check F T) ≫rewrittenTrafo η T =  (η.app T.1) ≫  eqToHom (check G _) := by rw [rewrittenTrafo] ; aesop
+ -/
 def cartesianNatTrans {P Q : fibration B}
   (F G : P ⥤c Q)
   := { η : F.1.left ⟶ G // ∀ {A : B} {T : obj_over (P :=P.1.hom) A} ,
   isVertical (X:=(F / A).obj T) (X':=(G / A).obj T) (rewrittenTrafo η T) }
+
 scoped infixr:80 " =>c " => cartesianNatTrans
+def cartesianIdTrans : (F : P ⥤c Q) →  F =>c F := fun F ↦ ⟨  𝟙 F.1.1 , fun {A} {T} ↦by
+  --obtain ⟨ myid , y ⟩ := 𝟙 T
+
+  -- have myhop : rewrittenTrafo (𝟙 F.left.1) T = myid := by sorry
+  rw [rewrittenTrafo, isVertical, Functor.map_comp] ;
+  simp ;
+  rw [ NatTrans.id_app (F:=F.1.left) ] ;
+  rw [Functor.map_id (self := Q.1.hom) (X:=(F.1.left.obj T.1))]
+  exact Category.id_comp (eqToHom _) --((↑Q).hom.obj ((↑F).left.obj ↑T))
+   ⟩
+  --def isVertical {X X' : obj_over (P:=P) A} (α : X.1 ⟶ X') := P.map α ≫ CategoryTheory.eqToHom X'.2  = CategoryTheory.eqToHom X.2
+  def compCartTrans {F G H: P ⥤c Q} (η: F =>c G) (ε : G =>c H) : F =>c H := ⟨
+     η.1 ≫ ε.1  ,
+    fun {A} {T} ↦ by
+      have toProve : rewrittenTrafo (η.1 ≫ ε.1) T = rewrittenTrafo η.1 T ≫ rewrittenTrafo ε.1 T := by simp ; aesop
+      rw [toProve]
+      apply compPresVertical
+      exact η.2
+      exact ε.2
+
+    ⟩
+
+
 --def cartNatTrans := ∀ (A : B) , F / A ⟶ G / A
 instance : Category (P ⥤c Q) where
   Hom := fun F G ↦ F =>c G
-  id := fun F ↦ ⟨  𝟙 F.1.1 , by sorry ⟩
-  comp := fun F G ↦ ⟨ F.1 ≫ G.1 , by sorry ⟩
+  id := cartesianIdTrans
+  comp := compCartTrans
+--def isVertical {X X' : obj_over (P:=P) A} (α : X.1 ⟶ X') := P.map α ≫ CategoryTheory.eqToHom X'.2  = CategoryTheory.eqToHom X.2
 def trafoOnFibers (η : F =>c G) (A : B) : F / A ⟶ G / A where
   app := by
     obtain  ⟨ η : F.1.left ⟶ G , isCart ⟩ := η
