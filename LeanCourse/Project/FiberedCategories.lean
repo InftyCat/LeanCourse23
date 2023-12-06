@@ -8,7 +8,7 @@ set_option autoImplicit true
 namespace CategoryTheory
 
 --open Opposite
-
+set_option maxHeartbeats 500000
 universe v₁ u₁ --v₂ u₁ u₂
 -- morphism levels before object levels. See note [CategoryTheory universes].
 variable {𝕏 : Type u₁} {B : Type u₁} [Category.{v₁} B] [Category.{v₁} 𝕏] {P : 𝕏 ⥤ B}
@@ -35,13 +35,10 @@ def compPresVertical {X Y Z : obj_over (P:=P) A} (f : X.1 ⟶Y.1 ) (g : Y.1 ⟶ 
     rw [Category.assoc]
     rw [q]
     rw [p]
-
+def idIsVertical (X : obj_over (P:=P) A) : isVertical (𝟙 X.1 ) := by simp
 instance : Category (obj_over ( P:= P) A) where
   Hom ( X X' : obj_over A) := { α : X.1 ⟶ X'.1 // isVertical (X:=X) (X':=X') α } -- over_hom (𝟙 A) X X' -- { α : verticalOver A // α.X = X ∧ α.X' = X' }
-  id (X : obj_over A) := ⟨ 𝟙 X.1 , by
-    rw [isVertical, Functor.map_id]
-    aesop_cat
-    ⟩
+  id (X : obj_over A) := ⟨ 𝟙 X.1 , idIsVertical _ ⟩
   comp {X} {Y} {Z} f g := ⟨  f.1 ≫ g.1 , compPresVertical f.1 g.1 f.2 g.2
      ⟩
 
@@ -52,6 +49,7 @@ instance : Category (obj_over ( P:= P) A) where
 structure liftOfAlong {J I : B} ( X : obj_over (P:=P) I) (u : J ⟶ I)  where
   Y : obj_over (P:=P) J
   φ : over_hom u Y X
+
 instance : CoeDep (liftOfAlong (P:=P) X u) L (L.Y.1 ⟶ X) where
   coe := L.φ.1
 variable {J I : B} {u : J ⟶ I}
@@ -160,7 +158,7 @@ def fibration (B : Cat.{v₁ , u₁}) := { P : Over B  //
   ∀ {J I : B} (u : J ⟶ I) (X : obj_over I) ,
     ∃ φ:  liftOfAlong (P:=P.hom) X u , isCartesian φ }
 
-
+def cartesianLift {P : Over B} {J I : B} (u : J ⟶ I) (X : obj_over (P:=P.hom) I) := { φ  : liftOfAlong (P:=P.hom) X u // isCartesian φ }
 -- variable {𝕏 : Type u₂} {B : Type u₁} [Category.{v₁} B] [Category.{v₂} 𝕏] {P : 𝕏 ⥤ B}
 instance : CoeOut (fibration B) (Over B) := ⟨ fun α ↦ α.1⟩
 
@@ -186,6 +184,8 @@ def objMappingBetweenFibers {P Q : fibration B} (F : P ⥤c Q) (A : B) : obj_ove
   exact X.2
 
 variable {P Q : fibration B} {F G : P ⥤c Q}
+def isIdentity {X Y : 𝕏} (f : X ⟶ Y) : Prop := ∃ (p : X = Y) , f = eqToHom p
+def isDiscrete (P : fibration B) := ∀ {A : B} {X Y : obj_over (P:=P.1.hom) A} (f : X ⟶ Y) , isIdentity f.1
 def toFunctorOnFibers (F : P ⥤c Q) (A : B) :
   Functor (obj_over (P := P.1.hom) A) (obj_over (P := Q.1.hom) A) where
     obj := objMappingBetweenFibers F A
@@ -222,48 +222,47 @@ scoped infixr:80 " / " => toFunctorOnFibers
  -/
 def cartesianNatTrans {P Q : fibration B}
   (F G : P ⥤c Q)
-  := { η : F.1.left ⟶ G // ∀ {A : B} {T : obj_over (P :=P.1.hom) A} ,
+  := { η : F.1.left ⟶ G // ∀ {A : B} (T : obj_over (P :=P.1.hom) A) ,
   isVertical (X:=(F / A).obj T) (X':=(G / A).obj T) (rewrittenTrafo η T) }
 
 scoped infixr:80 " =>c " => cartesianNatTrans
-def cartesianIdTrans : (F : P ⥤c Q) →  F =>c F := fun F ↦ ⟨  𝟙 F.1.1 , fun {A} {T} ↦by
-  --obtain ⟨ myid , y ⟩ := 𝟙 T
-
-  -- have myhop : rewrittenTrafo (𝟙 F.left.1) T = myid := by sorry
-  rw [rewrittenTrafo, isVertical, Functor.map_comp] ;
-  simp ;
-  rw [ NatTrans.id_app (F:=F.1.left) ] ;
-  rw [Functor.map_id (self := Q.1.hom) (X:=(F.1.left.obj T.1))]
-  exact Category.id_comp (eqToHom _) --((↑Q).hom.obj ((↑F).left.obj ↑T))
+@[simp] def cartesianIdTrans : (F : P ⥤c Q) →  F =>c F := fun F ↦ ⟨  𝟙 F.1.1 , fun {A} T ↦by
+  have this : rewrittenTrafo (𝟙 F.1.1) T = 𝟙 ((F / A).obj T).1 := by simp ; aesop
+  rw [this]
+  exact idIsVertical _
    ⟩
   --def isVertical {X X' : obj_over (P:=P) A} (α : X.1 ⟶ X') := P.map α ≫ CategoryTheory.eqToHom X'.2  = CategoryTheory.eqToHom X.2
-  def compCartTrans {F G H: P ⥤c Q} (η: F =>c G) (ε : G =>c H) : F =>c H := ⟨
+  @[simp] def compCartTrans {F G H: P ⥤c Q} (η: F =>c G) (ε : G =>c H) : F =>c H := ⟨
      η.1 ≫ ε.1  ,
-    fun {A} {T} ↦ by
+    fun T ↦ by
       have toProve : rewrittenTrafo (η.1 ≫ ε.1) T = rewrittenTrafo η.1 T ≫ rewrittenTrafo ε.1 T := by simp ; aesop
       rw [toProve]
       apply compPresVertical
-      exact η.2
-      exact ε.2
+      exact η.2 T
+      exact ε.2 T
 
     ⟩
-
+@[ext ,simp] lemma extCartTrafo {P Q : fibration B} {F G : P ⥤c Q} (η ε : F =>c G ) (p : η.1 = ε.1) : η = ε  := Subtype.ext p
 
 --def cartNatTrans := ∀ (A : B) , F / A ⟶ G / A
+-- @[simp] lemma ci {P Q : fibration B} {F G : P ⥤c Q} (η : F =>c G) : compCartTrans η (cartesianIdTrans G)  = η := by ext ; aesop
 instance : Category (P ⥤c Q) where
   Hom := fun F G ↦ F =>c G
   id := cartesianIdTrans
   comp := compCartTrans
+  -- comp_id := ci
+
+
 --def isVertical {X X' : obj_over (P:=P) A} (α : X.1 ⟶ X') := P.map α ≫ CategoryTheory.eqToHom X'.2  = CategoryTheory.eqToHom X.2
 def trafoOnFibers (η : F =>c G) (A : B) : F / A ⟶ G / A where
   app := by
     obtain  ⟨ η : F.1.left ⟶ G , isCart ⟩ := η
     intro X
     use rewrittenTrafo η X ;
-    rw [isCart]
-    aesop
+    exact (isCart X)
+
   naturality := by sorry
-instance : Bicategory (fibration B) where
+/- instance : Bicategory (fibration B) where
   Hom := fun P Q ↦ P ⥤c Q
   id := fun P ↦ by use 𝟙 P.1 ; sorry
   comp := fun {P Q R} F G ↦ ⟨ F.1 ≫ G.1 , by sorry ⟩
@@ -274,4 +273,6 @@ instance : Bicategory (fibration B) where
   associator := by sorry
   leftUnitor := by sorry
   rightUnitor := by sorry
+-/
+
 end FiberedCategories
