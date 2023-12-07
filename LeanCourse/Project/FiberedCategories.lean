@@ -14,7 +14,6 @@ universe v₁ u₁ --v₂ u₁ u₂
 variable {𝕏 : Type u₁} {B : Type u₁} [Category.{v₁} B] [Category.{v₁} 𝕏] {P : 𝕏 ⥤ B}
 namespace FiberedCategories
 
-def comp {X Y Z : B}  : (X ⟶ Y) → (Y ⟶ Z ) → (X ⟶ Z) := fun f g => f ≫ g
 
 def substCod {X Y Z : B} (h : Y = Z) (f : X ⟶ Y) : (X ⟶ Z) := f ≫ CategoryTheory.eqToHom h -- by rw [← h]  ; exact f
 def substDom {X Y Z : B} (h : X = Y) (f : Y ⟶ Z) : (X ⟶ Z) := CategoryTheory.eqToHom h ≫ f -- by rw [h]  ; exact f
@@ -29,13 +28,14 @@ def over_hom {A A' : B} (u : A ⟶ A') (X : obj_over (P:=P) A) (X' : obj_over (P
   {α : X.1 ⟶ X' //
    P.map α ≫ CategoryTheory.eqToHom X'.2  = CategoryTheory.eqToHom X.2 ≫ u }
 
-def compPresVertical {X Y Z : obj_over (P:=P) A} (f : X.1 ⟶Y.1 ) (g : Y.1 ⟶ Z.1) (p : isVertical f) (q : isVertical g) :
+@[simp] def compPresVertical {X Y Z : obj_over (P:=P) A} (f : X.1 ⟶Y.1 ) (g : Y.1 ⟶ Z.1) (p : isVertical f) (q : isVertical g) :
   isVertical (f ≫ g ) := by
     rw [isVertical, @Functor.map_comp]
     rw [Category.assoc]
     rw [q]
     rw [p]
 def idIsVertical (X : obj_over (P:=P) A) : isVertical (𝟙 X.1 ) := by simp
+
 instance : Category (obj_over ( P:= P) A) where
   Hom ( X X' : obj_over A) := { α : X.1 ⟶ X'.1 // isVertical (X:=X) (X':=X') α } -- over_hom (𝟙 A) X X' -- { α : verticalOver A // α.X = X ∧ α.X' = X' }
   id (X : obj_over A) := ⟨ 𝟙 X.1 , idIsVertical _ ⟩
@@ -44,6 +44,8 @@ instance : Category (obj_over ( P:= P) A) where
 
 
      -- axioms are automatically checked :D
+@[simp] lemma compInFib {X Y Z : obj_over (P:=P) A} (f : X ⟶ Y) (g : Y ⟶ Z) : (f ≫ g).1 = f.1 ≫ g.1 := rfl
+@[simp] lemma idInFib {X : obj_over (P:=P) A} : (𝟙 X : X ⟶ X).1 = 𝟙 X.1 := rfl
 @[simp] def coerc { X X' : obj_over A} (f : over_hom (P:=P) (𝟙 A) X X') : X ⟶ X' := ⟨ f.1 , by rw [isVertical, f.2] ; aesop ⟩
 @[simp] def coercBack {X X' : obj_over A} (f : X ⟶ X') : over_hom (P:=P) (𝟙 A) X X' := ⟨ f.1 , by rw [f.2] ; aesop⟩
 structure liftOfAlong {J I : B} ( X : obj_over (P:=P) I) (u : J ⟶ I)  where
@@ -138,16 +140,22 @@ theorem cartesianLiftIsUnique {J I : B} {u : J ⟶ I} {X : obj_over (P:=P) I} (L
 
     let myiso : Z ≅ Y  := ⟨ α , β , abh, bah ⟩
 
-    -- have h : myiso.hom = α := by sorry
+    have h : myiso.hom = α := rfl
+
     use myiso
     constructor
     · simp
       exact hα.1
     · intro α'  hα'
       ext
+      rw [h]
+      --simp at hα'
       apply hα.2
       exact hα'
+      --have goa := hα.2 hα'
+
 variable  {B : Cat.{v₁ , u₁}}
+@[ext , simp] lemma extFib {X Y : obj_over (P:=P) A } (f g : X ⟶ Y) (_ : f.1 = g.1) : f = g := by apply Subtype.ext ; assumption
 
 
 
@@ -184,7 +192,7 @@ def objMappingBetweenFibers {P Q : fibration B} (F : P ⥤c Q) (A : B) : obj_ove
   exact X.2
 
 variable {P Q : fibration B} {F G : P ⥤c Q}
-def isIdentity {X Y : 𝕏} (f : X ⟶ Y) : Prop := ∃ (p : X = Y) , f = eqToHom p
+def isIdentity  {𝕏 : Type u₁} [Category.{v₁} 𝕏] {X Y : 𝕏} (f : X ⟶ Y) : Prop := ∃ (p : X = Y) , f = eqToHom p
 def isDiscrete (P : fibration B) := ∀ {A : B} {X Y : obj_over (P:=P.1.hom) A} (f : X ⟶ Y) , isIdentity f.1
 def toFunctorOnFibers (F : P ⥤c Q) (A : B) :
   Functor (obj_over (P := P.1.hom) A) (obj_over (P := Q.1.hom) A) where
