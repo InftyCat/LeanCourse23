@@ -216,7 +216,7 @@ def toFunctorOnFibers (F : P ⥤c Q) (A : B) :
     map_id := by sorry
     map_comp := by sorry
 
-scoped infixr:80 " / " => toFunctorOnFibers
+scoped infixr:70 " / " => toFunctorOnFibers
 
 @[simp] lemma check {A : B} (F : P ⥤c Q) (X : obj_over A) : ((F / A).obj X).1 = F.1.left.obj X.1 := rfl
 
@@ -270,12 +270,14 @@ def trafoOnFibers (η : F =>c G) (A : B) : F / A ⟶ G / A where
     exact (isCart X)
 
   naturality := by sorry
-/- instance : Bicategory (fibration B) where
+instance : Category (fibration B) where
   Hom := fun P Q ↦ P ⥤c Q
-  id := fun P ↦ by use 𝟙 P.1 ; sorry
-  comp := fun {P Q R} F G ↦ ⟨ F.1 ≫ G.1 , by sorry ⟩
+  id := fun P ↦ by use 𝟙 P.1 ; intro φ hφ ; simp
+  comp := fun {P Q R} F G ↦ ⟨ F.1 ≫ G.1 , fun {X} {Y} φ hφ ↦ G.2 _ (F.2 _ hφ)⟩
 
+/-
 
+instance : Bicategory (fibration B) where
   whiskerLeft := by sorry
   whiskerRight := by sorry
   associator := by sorry
