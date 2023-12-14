@@ -41,6 +41,9 @@ instance : Category (obj_over ( P:= P) A) where
   id (X : obj_over A) := ⟨ 𝟙 X.1 , idIsVertical _ ⟩
   comp {X} {Y} {Z} f g := ⟨  f.1 ≫ g.1 , compPresVertical f.1 g.1 f.2 g.2
      ⟩
+def forget : (obj_over (P:=P) A) ⥤ 𝕏 where
+  obj := fun X ↦ X.1
+  map := fun f ↦ f.1
 
 
      -- axioms are automatically checked :D
