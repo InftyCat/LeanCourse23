@@ -1,6 +1,7 @@
 import Mathlib.CategoryTheory.Over
 import Mathlib.CategoryTheory.EqToHom
 import Mathlib.CategoryTheory.Opposites
+import Mathlib.CategoryTheory.Functor.Category
 import LeanCourse.Project.FiberedCategories
 import LeanCourse.Project.Cleavage
 import LeanCourse.Project.Split
@@ -25,12 +26,12 @@ universe v₁ u₁ --v₂ u₁ u₂
 
 namespace FiberedCategories
 variable {B : Cat.{v₁ , u₁}} {I J K : B}
-noncomputable def presheafOfCategories (F : splitFibration B) : Bᵒᵖ  ⥤ Cat where
+noncomputable def presheafOfCategories_obj (F : splitFibration B) : Bᵒᵖ  ⥤ Cat where
   obj := fun I ↦ F ↓ I.unop
   map := fun u ↦ reindexing (Quiver.Hom.unop u)
   map_comp := fun {K J I} v u ↦ by sorry
   map_id := fun I ↦ by simp ; sorry
-notation F "$" => presheafOfCategories F
+notation F "$" => presheafOfCategories_obj F
 @[simp] noncomputable def re {F : splitFibration B} (u : J ⟶ I) : F ↓ I ⟶ F ↓ J := reindexing u
 def fibb {F G : splitFibration B} (α : F ⥤cs G) (I : B) : F ↓ I ⟶ G ↓ I := (α.1) / I
 scoped notation:70 α " / " I => fibb α I
@@ -95,10 +96,16 @@ theorem Naturality {F G : splitFibration B} (α : F ⥤cs G) (u : J ⟶ I) :
 
 
 
-def morphism {F G : splitFibration B} (α : F ⥤cs G) :  F $ ⟶ G $ where
+def presheafOfCategories_map {F G : splitFibration B} (α : F ⥤cs G) :  F $ ⟶ G $ where
   app := fun I ↦ α.1 / Opposite.unop I
 
   naturality := fun {I J} u ↦ by
     simp
     sorry
     -- let η : F$.map u ≫ ((α.1) / _ ) ≅ ((α.1)/ I.unop) ≫G$.map u := by sorry
+def PSh ( B : Cat) := B ᵒᵖ ⥤ Cat
+
+instance : Category (PSh B)  := Functor.category (C:= B ᵒᵖ) (D:= Cat)
+noncomputable def funtoriality : splitFibration B ⥤ PSh B  where
+  obj := presheafOfCategories_obj
+  map := presheafOfCategories_map

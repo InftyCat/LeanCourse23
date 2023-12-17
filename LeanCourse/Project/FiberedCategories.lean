@@ -166,7 +166,7 @@ instance : CoeDep (Over B) F (F.1 ⥤ B) where
   coe := F.hom
 
 def fibration (B : Cat.{v₁ , u₁}) := { P : Over B  //
-  ∀ {J I : B} (u : J ⟶ I) (X : obj_over I) ,
+  ∀ {J I : B} (u : J ⟶ I) (X : obj_over (P:=P.hom) I) ,
     ∃ φ:  liftOfAlong (P:=P.hom) X u , isCartesian φ }
 
 def cartesianLift {P : Over B} {J I : B} (u : J ⟶ I) (X : obj_over (P:=P.hom) I) := { φ  : liftOfAlong (P:=P.hom) X u // isCartesian φ }
@@ -196,7 +196,7 @@ def objMappingBetweenFibers {P Q : fibration B} (F : P ⥤c Q) (A : B) : obj_ove
 
 variable {P Q : fibration B} {F G : P ⥤c Q}
 def isIdentity  {𝕏 : Type u₁} [Category.{v₁} 𝕏] {X Y : 𝕏} (f : X ⟶ Y) : Prop := ∃ (p : X = Y) , f = eqToHom p
-def isDiscrete (P : fibration B) := ∀ {A : B} {X Y : obj_over (P:=P.1.hom) A} (f : X ⟶ Y) , isIdentity f.1
+
 def toFunctorOnFibers (F : P ⥤c Q) (A : B) :
   Functor (obj_over (P := P.1.hom) A) (obj_over (P := Q.1.hom) A) where
     obj := objMappingBetweenFibers F A
