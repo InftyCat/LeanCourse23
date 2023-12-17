@@ -279,6 +279,8 @@ instance : Category (fibration B) where
   comp := fun {P Q R} F G ↦ ⟨ F.1 ≫ G.1 , fun {X} {Y} φ hφ ↦ G.2 _ (F.2 _ hφ)⟩
 @[simp] def simptest {P Q R: fibration B} {F : P ⥤c Q} {G : Q ⥤c R} : (F ≫ G).1 = F.1 ≫ G.1 := rfl
 @[simp] lemma compCheck {A : B} (F : P ⥤c Q) (G : Q ⥤c R) (X : obj_over A) : (G/A).obj ((F / A).obj X) = ((F ≫ G) / A).obj X := rfl
+
+
 /-
 
 instance : Bicategory (fibration B) where

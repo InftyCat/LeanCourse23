@@ -21,7 +21,7 @@ variable {B : Cat.{v₁ , u₁}} {I J K : B}
 -- scoped infixr:80 " >> " => fun F G => transLift G F
 
 -- scoped infixr:80 " ↓ " => fun P A =>obj_over (P:=P.1.hom) A
-notation (priority := high) P "[" A "]" => obj_over (P:=P.1.hom) A
+
 
 class Cleavage (P : fibration B)  : Type (max u₁ v₁) where
   Cart' : ∀ {J I : B} (u : J ⟶ I ) (X: P[I] ) , cartesianLiftOfAlong (P:=P.1.hom) X u
