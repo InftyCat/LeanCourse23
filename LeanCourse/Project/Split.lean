@@ -23,7 +23,7 @@ namespace FiberedCategories
 variable {B : Cat.{v₁ , u₁}} {I J K : B}
 def split {P : fibration B} (c : Cleavage P) : Prop :=
   ∀ {I} (X : P[I]) , isIdentity (Y:=X.1) (Cart (𝟙 I) X)  ∧
-  ∀ {I J K} (u : J ⟶ I) (v : K ⟶ J) (X : P[I]) , ∃ p : (v * u * X).1 = ((v ≫ u) * X).1 ,
+  ∀ {J K} (u : J ⟶ I) (v : K ⟶ J) , ∃ p : (v * u * X).1 = ((v ≫ u) * X).1 ,
     eqToHom p ≫ Cart (v ≫ u) X = Cart v (u * X) ≫ Cart u X
 structure splitFibration (B : Cat) where
  P : fibration B

@@ -19,7 +19,7 @@ set_option quotPrecheck false
 open Opposite
 open Iso
 
-universe v₁ u₁ --v₂ u₁ u₂
+universe v₁ u₁ t₁ s₁  --v₂ u₁ u₂
 -- morphism levels before object levels. See note [CategoryTheory universes].
 
 
@@ -103,9 +103,15 @@ def presheafOfCategories_map {F G : splitFibration B} (α : F ⥤cs G) :  F $ �
     simp
     sorry
     -- let η : F$.map u ≫ ((α.1) / _ ) ≅ ((α.1)/ I.unop) ≫G$.map u := by sorry
-def PSh ( B : Cat) := B ᵒᵖ ⥤ Cat
 
-instance : Category (PSh B)  := Functor.category (C:= B ᵒᵖ) (D:= Cat)
-noncomputable def funtoriality : splitFibration B ⥤ PSh B  where
+def PShCat (B : Cat.{v₁ , u₁} )  : Cat:= Bundled.of (B ᵒᵖ ⥤ Cat.{s₁ , t₁}) --{s₁ t₁} --.{max s₁ v₁ , max t₁ u₁}
+/- def PSh : Cat ᵒᵖ ⥤ Cat where
+  obj := fun B ↦ PShCat (unop B)
+  map := sorry
+  map_id := sorry
+  map_comp := sorry
+-- instance : Category (PSh B)  := Functor.category (C:= B ᵒᵖ) (D:= Cat)
+-/
+noncomputable def funtoriality : splitFibration B ⥤ PShCat B  where
   obj := presheafOfCategories_obj
   map := presheafOfCategories_map

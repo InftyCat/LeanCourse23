@@ -22,7 +22,7 @@ variable {B : Cat.{v₁ , u₁}} {I J K : B}
 
 -- scoped infixr:80 " ↓ " => fun P A =>obj_over (P:=P.1.hom) A
 
-
+notation (priority := high) P "[" A "]" => obj_over (P:=P.1.hom) A
 class Cleavage (P : fibration B)  : Type (max u₁ v₁) where
   Cart' : ∀ {J I : B} (u : J ⟶ I ) (X: P[I] ) , cartesianLiftOfAlong (P:=P.1.hom) X u
 
@@ -30,8 +30,8 @@ open Cleavage
 
 scoped notation u " * " X => (Cart' u X).Y
 variable  {P : fibration B} [Cleavage P]
--- scoped notation "Cart" u X => (Cart' u X).φ.1 would prefer that TODO
-def Cart {J I : B} (u : J ⟶ I) (X : P[I]) : (u * X).1 ⟶ X.1 := (Cart' u X).φ.1
+-- scoped notation "Cart" u:0 X:0 => (Cart' u X).φ.1 -- would prefer that TODO
+def Cart {J I : B} (u : J ⟶ I) (X : P[I]) : (u * X).1 ⟶ X.1 := (Cart' u X).φ.1 --abbrev seems to yield problems later letting aesop show, that splitfibrations form a category
 def transport   {A A' : B} {u u' : A ⟶ A'} {X : P[A]} {X' : P[A']}
   (p : u = u') (f : over_hom u X X') : over_hom u' X X' := by
   use f.1
@@ -61,7 +61,7 @@ lemma map_comp'  (u : J ⟶ I) {X Y Z : P[I]}
     let hφ :=  ((u ⋆ α).choose_spec).1
     let hψ :=  ((u ⋆ β).choose_spec).1
     apply hcomp.2
-    have hφ : ((u ⋆ α).choose).1 ≫ Cart u Y =  Cart u X ≫ α.1 := hφ
+    have hφ : ((u ⋆ α).choose).1 ≫ (Cart (u) (Y)) =  (Cart u X) ≫ α.1 := hφ
     have hψ : ((u ⋆ β).choose).1 ≫ Cart u Z =  Cart u Y ≫ β.1 := hψ
     have ass : Cart u X ≫ (α ≫ β).1 = (Cart u X ≫ α.1) ≫ β.1 := by
       rw [Category.assoc] ;

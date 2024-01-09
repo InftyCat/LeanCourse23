@@ -73,8 +73,10 @@ def isWeakCartesian {X : obj_over (P:=P) I} (τ: liftOfAlong X u):= ∀ (L : lif
   ∃! ψ : L.Y ⟶ τ.Y , ψ.1 ≫ τ.φ.1 = L
 
 
-structure cartesianLiftOfAlong {J I : B} ( X : obj_over (P:=P) I) (u : J ⟶ I) extends liftOfAlong X u where
- isCart : isCartesian (P:=P) L
+structure cartesianLiftOfAlong {J I : B} ( X : obj_over (P:=P) I) (u : J ⟶ I) extends liftOfAlong (P:=P) X u where
+   isCart : isCartesian (P:=P) toliftOfAlong
+@[ext] def extCartLift {J I} (u : J ⟶ I) (X : obj_over (P:=P) I) (r s : cartesianLiftOfAlong X u) (q : r.1 = s.1) : r = s
+  := by sorry
 
 instance : CoeOut (cartesianLiftOfAlong (P:=P) A u) (liftOfAlong (P:=P) A u) := ⟨fun α ↦ α.1⟩
 
@@ -257,11 +259,6 @@ scoped infixr:80 " =>c " => cartesianNatTrans
 
 --def cartNatTrans := ∀ (A : B) , F / A ⟶ G / A
 -- @[simp] lemma ci {P Q : fibration B} {F G : P ⥤c Q} (η : F =>c G) : compCartTrans η (cartesianIdTrans G)  = η := by ext ; aesop
-instance : Category (P ⥤c Q) where
-  Hom := fun F G ↦ F =>c G
-  id := cartesianIdTrans
-  comp := compCartTrans
-  -- comp_id := ci
 
 
 --def isVertical {X X' : obj_over (P:=P) A} (α : X.1 ⟶ X') := P.map α ≫ CategoryTheory.eqToHom X'.2  = CategoryTheory.eqToHom X.2
@@ -279,6 +276,11 @@ instance : Category (fibration B) where
   comp := fun {P Q R} F G ↦ ⟨ F.1 ≫ G.1 , fun {X} {Y} φ hφ ↦ G.2 _ (F.2 _ hφ)⟩
 @[simp] def simptest {P Q R: fibration B} {F : P ⥤c Q} {G : Q ⥤c R} : (F ≫ G).1 = F.1 ≫ G.1 := rfl
 @[simp] lemma compCheck {A : B} (F : P ⥤c Q) (G : Q ⥤c R) (X : obj_over A) : (G/A).obj ((F / A).obj X) = ((F ≫ G) / A).obj X := rfl
+instance {P Q : fibration B} : Category (P ⟶ Q) where
+  Hom := fun F G ↦ F =>c G
+  id := cartesianIdTrans
+  comp := compCartTrans
+  -- comp_id := ci
 
 
 /-
