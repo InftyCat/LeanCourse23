@@ -1,4 +1,5 @@
 import Mathlib.CategoryTheory.Over
+import Mathlib.CategoryTheory.StructuredArrow
 import Mathlib.CategoryTheory.EqToHom
 import Mathlib.CategoryTheory.Opposites
 import Mathlib.CategoryTheory.Bicategory.Basic
@@ -83,32 +84,32 @@ lemma splitFromDiscrete {P : discreteFibration B} : split (P:=P.1) instCleavageV
 
 
 def Fib (B : Cat) : Cat :=Bundled.of (fibration B)
-def yo_obj {B : Cat.{v₁,u₁ }} (P : fibration B) : (Fib B) ᵒᵖ ⥤ Cat where
+@[simps] def yo_obj2 {B : Cat.{v₁,u₁ }} (P : fibration B) : (Fib B) ᵒᵖ ⥤ Cat where
   obj := fun Q ↦ ⟨ Q.unop ⟶ P , instCategoryHomFibrationToQuiverToCategoryStructInstCategoryFibration⟩
   map := fun F ↦  (Bicategory.precomposing _ _ P).obj F.unop
 --def precomp {C : Cat.{v₁,u₁}} {D : Cat.{v₂,u₂}} {E : Cat.{v₃,u₃}} (F : C ⥤ D) : (D ⥤ E)  ⥤ (C ⥤ E)
  -- where --
 
 
-def PSh_rest {C : Cat.{v₁,u₁}} {D : Cat.{v₂,u₂}} (F : C ⥤ D) : PShCat.{v₂ , u₂ , s₁ , t₁} D ⥤ PShCat.{v₁ , u₁ , s₁ , t₁} C where
+@[simps] def PSh_rest {C : Cat.{v₁,u₁}} {D : Cat.{v₂,u₂}} (F : C ⥤ D) : PShCat.{v₂ , u₂ , s₁ , t₁} D ⥤ PShCat.{v₁ , u₁ , s₁ , t₁} C where
   obj := fun G ↦ F.op ⋙ G
   map := CategoryTheory.whiskerLeft F.op
 
 
-def yo  {B : Cat.{v₁,u₁ }} : Fib B ⥤ PShCat (Fib B) where
-  obj := yo_obj
+@[simps] def yo  {B : Cat.{v₁,u₁ }} : Fib B ⥤ PShCat (Fib B) where
+  obj := yo_obj2
   map := fun f ↦ ⟨ fun X ↦  (Bicategory.postcomposing _ _ _).obj f ,  by sorry ⟩
   map_id := fun X ↦ sorry
   map_comp := by sorry
 def U (P : splitFibration B) : fibration B := P.1
-def Sp {B : Cat} : (Fib B) ⥤ splitFibration B := yo ⋙ (PSh_rest (domainFibration (B:=B))) ⋙ Grothendieck
--- def myId {B : Cat} {I : ↑ B} : obj_over (P:=domainFibration.obj I) I := ⟨ Over.mk (𝟙 I ) , rfl ⟩
+def Sp {B : Cat} : (Fib B) ⥤ splitFibration B := yo ⋙ (PSh_rest (fundamentalFibration (B:=B))) ⋙ Grothendieck
+-- def myId {B : Cat} {I : ↑ B} : obj_over (P:=fundamentalFibration.obj I) I := ⟨ Over.mk (𝟙 I ) , rfl ⟩
 
 variable {P : fibration B}
 
-def E_obj_obj {I : B} (X : (domainFibration.obj I ⟶ P)) :  obj_over (P:=P.1.hom) I := (X / I).obj ⟨Over.mk (𝟙 I ) , rfl ⟩
+@[simp]def E_obj_obj {I : B} (X : (fundamentalFibration.obj I ⟶ P)) :  obj_over (P:=P.1.hom) I := (X / I).obj ⟨Over.mk (𝟙 I ) , rfl ⟩
 
-def E_obj_map {I : B} {F G : (domainFibration.obj I ⟶ P)} (f : F ⟶ G) : E_obj_obj F ⟶E_obj_obj G
+@[simp] def E_obj_map {I : B} {F G : (fundamentalFibration.obj I ⟶ P)} (f : F ⟶ G) : E_obj_obj F ⟶E_obj_obj G
   := ⟨ rewrittenTrafo f.1 ⟨ Over.mk (𝟙 I ) , rfl ⟩ , by apply f.2⟩
 @[simp] lemma cartesianIdTrans' {A : B} {T : obj_over A} (F : P ⥤c Q) : rewrittenTrafo (𝟙 F.1.1) T = 𝟙 ((F / A).obj T).1 := by simp ; aesop
 @[simp] lemma idCartFunctor {P Q : fibration B} (F : P ⟶ Q) : ∀ X,  ((𝟙 F : F =>c F).1).app X = 𝟙 (F.1.left.obj X) := fun X ↦ rfl
@@ -125,21 +126,86 @@ def E_obj_map {I : B} {F G : (domainFibration.obj I ⟶ P)} (f : F ⟶ G) : E_ob
 
     ⟩
 -/
-def E_obj_map_id {I : B} (X : (domainFibration.obj I ⟶ P)) :
+def E_obj_map_id {I : B} (X : (fundamentalFibration.obj I ⟶ P)) :
   E_obj_map (𝟙 X) = 𝟙 (E_obj_obj X) := by
   apply Subtype.ext ; rw [E_obj_map]
-  have lol' : 𝟙 ((X.1).left.obj (Over.mk (𝟙 I))) = 𝟙 (E_obj_obj X).1 := rfl
-  simp
-  assumption
+  simp only [Functor.id_obj, Functor.const_obj_obj, E_obj_obj, check, rewrittenTrafo, eqToHom_refl,
+    isVertical, idCartFunctor, Category.comp_id, idInFib]
 
 -- def E_obj_map_comp
-def E_obj {I : B} : (domainFibration.obj I ⟶ P) ⥤ obj_over (P:=P.1.hom) I where
+@[simps] def E'_obj  {I : B} : (fundamentalFibration.obj I ⟶ P) ⥤ obj_over (P:=P.1.hom) I where
   obj := fun X ↦ E_obj_obj X
   map := fun f ↦ E_obj_map f
   map_id := fun X ↦ E_obj_map_id X
   map_comp := sorry
 
+-- def E' : yo ⋙ (PSh_rest (fundamentalFibration (B:=B)))
+
 /-
-lemma SpP {I : B} : (Sp.obj P) ↓ I ≅ Bundled.of (domainFibration.obj I ⟶ P) := by sorry
-def E : Sp.obj P ⥤c P := ⟨ by sorry , by sorry ⟩
+def pseudoNatural {Q : PShCat B} :=
+  { η : {I : B} → Q.obj (Opposite.op I) ⥤ P[I]  //
+  ∀ {J I} (u : J ⟶ I) , η ⋙ reindexing u = Q.map u.op ⋙ η  }
+variable {P : fibration B} {Q : PShCat B}
+def GrothendieckIntroRule_map {Q : PShCat B} (η : {I : B} → Q.obj (Opposite.op I) ⥤ P[I] )
+  {I J : B} {X : Q.obj (Opposite.op I)} {Y : Q.obj (Opposite.op J)}
+  (u : J ⟶ I) {α : Y ⟶ (Q.map u.op).obj X} :  (η.obj Y).1 ⟶  (η.obj X).1 := by
+    apply ((η.map α).1 ≫ · )
 -/
+  /-
+def GrothendieckIntroRule {Q : PShCat B} (η : {I : B} → Q.obj (Opposite.op I) ⥤ P[I] ) : (Grth Q).left ⥤ P.1.left where
+  obj := fun X ↦ (η.obj X.unop.fiber).1
+  map := fun {X} {Y} f ↦ by
+    obtain ⟨I , X⟩:= X
+    obtain ⟨J , Y⟩ := Y
+    obtain ⟨u , α ⟩ :=f
+
+    exact ((η.map α).1 ≫ sorry)
+    -- apply (η.map α ≫ · )
+
+
+  -/
+
+/-
+def GrothendieckIntroRule {Q : PShCat B} (η : (I : B) → (P[I]) ⥤ Q.obj (Opposite.op I) ) : Grth Q ⟶ P.1 := by
+apply Over.homMk
+sorry
+-/
+
+/-
+lemma SpP {I : B} : (Sp.obj P) ↓ I ≅ Bundled.of (fundamentalFibration.obj I ⟶ P) := by sorry
+-/
+lemma weird {I J : Bᵒᵖ} {u : I ⟶ J} : (Over.map u.unop).obj (Over.mk (𝟙 J.unop)) = Over.mk u.unop := by
+  trans Over.mk (𝟙 J.unop ≫ u.unop)
+  · have goal : ((Over.map u.unop).obj (Over.mk (𝟙 J.unop))).hom = (Over.mk (𝟙 J.unop ≫ u.unop)).hom := by apply Over.map_obj_hom
+    sorry
+  · apply congrArg _ ; apply Category.id_comp
+
+
+def E_functor : (Sp.obj P).1.1.left ⥤ P.1.left where
+  obj := fun X ↦ ((E'_obj).obj X.unop.fiber).1
+  map :=  fun {Y} {X}  f ↦ by
+    obtain ⟨I , X⟩:= X
+    obtain ⟨J , Y⟩ := Y
+    obtain ⟨u , α ⟩ :=f
+    simp
+    let fst : _ ⟶ Y.1.left.obj (Over.mk (𝟙 J.unop ) ) :=
+      (α.1.app (Over.mk (𝟙 J.unop)))
+    have this: ((((yo_obj2 P).map (fundamentalFibration.map u.unop).op).obj X).1).left.obj (Over.mk (𝟙 J.unop)) =
+      X.1.left.obj (Over.mk u.unop) := by simp ; apply congrArg (X.1.left.obj) ; exact weird
+    let fst := eqToHom (symm this) ≫ fst
+    let snd :=
+    -- (↑((((PSh_rest fundamentalFibration).obj (yo.obj P)).map u).obj X)).left.obj (Over.mk (𝟙 J.unop ))
+    -- apply (· ≫ fst )
+    f(ID) -> F (U)
+
+
+
+
+    -- apply ((by sorry) ≫ ·  )
+
+
+  map_comp := by sorry
+  map_id := by sorry
+def E : Sp.obj P ⥤c P := ⟨ by
+
+  sorry , by sorry ⟩

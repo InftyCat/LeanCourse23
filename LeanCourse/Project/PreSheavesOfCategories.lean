@@ -25,6 +25,25 @@ universe v₁ u₁ t₁ s₁  --v₂ u₁ u₂
 
 
 namespace FiberedCategories
+--attribute[ext] Functor
+
+def extFunctor {C D : Cat} {F G : C ⥤ D}
+  (η : F ⟶ G)
+ (isLevelwiseIdent : ∀ X : C , isIdentity (η.app X) ) : F = G :=
+  CategoryTheory.Functor.ext (fun X ↦ ((isLevelwiseIdent X).choose))
+  (fun {X} {Y} f ↦ by
+  let nat := η.naturality f
+  rw[← Category.assoc]
+  apply (CategoryTheory.Iso.eq_comp_inv (eqToIso _)).2
+  have this : ∀ X , η.app X = eqToHom _ := fun X ↦ (isLevelwiseIdent X).choose_spec
+  rw [← this X]
+  rw [← nat]
+  rw[ this Y]
+  rfl
+  exact ((isLevelwiseIdent Y).choose)
+  )
+
+
 variable {B : Cat.{v₁ , u₁}} {I J K : B}
 noncomputable def presheafOfCategories_obj (F : splitFibration B) : Bᵒᵖ  ⥤ Cat where
   obj := fun I ↦ F ↓ I.unop
@@ -34,7 +53,7 @@ noncomputable def presheafOfCategories_obj (F : splitFibration B) : Bᵒᵖ  ⥤
 notation F "$" => presheafOfCategories_obj F
 @[simp] noncomputable def re {F : splitFibration B} (u : J ⟶ I) : F ↓ I ⟶ F ↓ J := reindexing u
 def fibb {F G : splitFibration B} (α : F ⥤cs G) (I : B) : F ↓ I ⟶ G ↓ I := (α.1) / I
-scoped notation:70 α " / " I => fibb α I
+local notation:70 α " / " I => fibb α I
 noncomputable def appNat{F G : splitFibration B} {α : F ⥤cs G} {u : J ⟶ I} (X : F ↓ I) :
   ((α / I) ≫ re u).obj X ≅ (re u ≫ (α / J)).obj X := eqToIso (Subtype.ext (α.2 u X).choose)
 
@@ -48,6 +67,11 @@ def m {F G : splitFibration B} (α : F ⥤cs G) (I : B) {X Y : F ↓ I } (f : X 
 --#check CategoryTheory.Functor.mapIso forget (appNat Y)
 noncomputable def undAppNat {F G : splitFibration B} {α : F ⥤cs G} {u : J ⟶ I} (X : F ↓ I) :
   (((α / I) ≫ re u).obj X).1 ≅ ((re u ≫ (α / J)).obj X).1 := CategoryTheory.Functor.mapIso forget (appNat X)
+
+
+lemma appNatInvIsEq{F G : splitFibration B} {α : F ⥤cs G} {u : J ⟶ I} (X : F ↓ I) :
+  isIdentity (𝕏:=(G ↓ J) ) (Y:=((α / I) ≫ re u).obj X) ((appNat X).inv) := by use symm (Subtype.ext (α.2 u X).choose) ; rfl
+
 
 lemma natHelper {F G : splitFibration B} (α : F ⥤cs G) (u : J ⟶ I)
 {X Y: ↑(F ↓ I)}
@@ -79,7 +103,8 @@ lemma natHelper {F G : splitFibration B} (α : F ⥤cs G) (u : J ⟶ I)
         _ = ((appNat X).hom.1 ≫ (α %).map (Cart u X)) ≫ m α I f                               :=  by rw [← Category.assoc]
         _ = Cart u ((α / I).obj X) ≫ m α I f                                               :=  (eq_whisker obs3 (m α I f))
         _ = Cart u ((α / I).obj X) ≫ ((α / I).map f).1 := rfl
-theorem Naturality {F G : splitFibration B} (α : F ⥤cs G) (u : J ⟶ I) :
+
+noncomputable def Naturality {F G : splitFibration B} (α : F ⥤cs G) (u : J ⟶ I) :
   (α / I) ≫ re u  ≅ re u ≫ (α / J) :=
     NatIso.ofComponents appNat
     (by
@@ -93,15 +118,18 @@ theorem Naturality {F G : splitFibration B} (α : F ⥤cs G) (u : J ⟶ I) :
 
 
 
-
-
-
 def presheafOfCategories_map {F G : splitFibration B} (α : F ⥤cs G) :  F $ ⟶ G $ where
   app := fun I ↦ α.1 / Opposite.unop I
 
-  naturality := fun {I J} u ↦ by
-    simp
-    sorry
+  naturality := fun {I J} u ↦ extFunctor (Naturality α u.unop).inv (by
+      intro X
+      have this : (appNat X).inv = ((Naturality α u.unop).inv.app X) := by aesop
+      rw [← this]
+      exact appNatInvIsEq X
+    )
+
+
+
     -- let η : F$.map u ≫ ((α.1) / _ ) ≅ ((α.1)/ I.unop) ≫G$.map u := by sorry
 
 def PShCat (B : Cat.{v₁ , u₁} )  : Cat:= Bundled.of (B ᵒᵖ ⥤ Cat.{s₁ , t₁}) --{s₁ t₁} --.{max s₁ v₁ , max t₁ u₁}
@@ -112,6 +140,6 @@ def PShCat (B : Cat.{v₁ , u₁} )  : Cat:= Bundled.of (B ᵒᵖ ⥤ Cat.{s₁ 
   map_comp := sorry
 -- instance : Category (PSh B)  := Functor.category (C:= B ᵒᵖ) (D:= Cat)
 -/
-noncomputable def funtoriality : splitFibration B ⥤ PShCat B  where
+noncomputable def presheafOfCategories : splitFibration B ⥤ PShCat B  where
   obj := presheafOfCategories_obj
   map := presheafOfCategories_map

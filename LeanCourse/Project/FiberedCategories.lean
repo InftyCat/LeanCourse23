@@ -28,7 +28,7 @@ def over_hom {A A' : B} (u : A ⟶ A') (X : obj_over (P:=P) A) (X' : obj_over (P
   {α : X.1 ⟶ X' //
    P.map α ≫ CategoryTheory.eqToHom X'.2  = CategoryTheory.eqToHom X.2 ≫ u }
 
-@[simp] def compPresVertical {X Y Z : obj_over (P:=P) A} (f : X.1 ⟶Y.1 ) (g : Y.1 ⟶ Z.1) (p : isVertical f) (q : isVertical g) :
+@[simp] lemma compPresVertical {X Y Z : obj_over (P:=P) A} (f : X.1 ⟶Y.1 ) (g : Y.1 ⟶ Z.1) (p : isVertical f) (q : isVertical g) :
   isVertical (f ≫ g ) := by
     rw [isVertical, @Functor.map_comp]
     rw [Category.assoc]
@@ -171,7 +171,7 @@ def fibration (B : Cat.{v₁ , u₁}) := { P : Over B  //
   ∀ {J I : B} (u : J ⟶ I) (X : obj_over (P:=P.hom) I) ,
     ∃ φ:  liftOfAlong (P:=P.hom) X u , isCartesian φ }
 
-def cartesianLift {P : Over B} {J I : B} (u : J ⟶ I) (X : obj_over (P:=P.hom) I) := { φ  : liftOfAlong (P:=P.hom) X u // isCartesian φ }
+-- def cartesianLift {P : Over B} {J I : B} (u : J ⟶ I) (X : obj_over (P:=P.hom) I) := { φ  : liftOfAlong (P:=P.hom) X u // isCartesian φ }
 -- variable {𝕏 : Type u₂} {B : Type u₁} [Category.{v₁} B] [Category.{v₂} 𝕏] {P : 𝕏 ⥤ B}
 instance : CoeOut (fibration B) (Over B) := ⟨ fun α ↦ α.1⟩
 
@@ -274,7 +274,7 @@ instance : Category (fibration B) where
   Hom := fun P Q ↦ P ⥤c Q
   id := fun P ↦ by use 𝟙 P.1 ; intro φ hφ ; simp
   comp := fun {P Q R} F G ↦ ⟨ F.1 ≫ G.1 , fun {X} {Y} φ hφ ↦ G.2 _ (F.2 _ hφ)⟩
-@[simp] def simptest {P Q R: fibration B} {F : P ⥤c Q} {G : Q ⥤c R} : (F ≫ G).1 = F.1 ≫ G.1 := rfl
+@[simp] lemma simptest {P Q R: fibration B} {F : P ⥤c Q} {G : Q ⥤c R} : (F ≫ G).1 = F.1 ≫ G.1 := rfl
 @[simp] lemma compCheck {A : B} (F : P ⥤c Q) (G : Q ⥤c R) (X : obj_over A) : (G/A).obj ((F / A).obj X) = ((F ≫ G) / A).obj X := rfl
 instance {P Q : fibration B} : Category (P ⟶ Q) where
   Hom := fun F G ↦ F =>c G

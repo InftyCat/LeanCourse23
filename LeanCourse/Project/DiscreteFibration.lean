@@ -90,30 +90,30 @@ lemma domainIsDiscrete (A : B) : isDiscreteOverB (domainOver A) := fun {J I} u X
 
 def automaticallyCart {P : Over B} {X Y : P.left} (f : X ⟶ Y) : isCartesianMorphism P f := by sorry
 
-def domainFibration_obj (A : B) : fibration B := discreteIsCartesian (domainIsDiscrete A)
-def domainFibration_map {J I : B} (u : J ⟶ I) : domainFibration_obj J ⥤c domainFibration_obj I
+@[simp] def fundamentalFibrationObj (A : B) : fibration B := discreteIsCartesian (domainIsDiscrete A)
+@[simp] def fundamentalFibrationMap {J I : B} (u : J ⟶ I) : fundamentalFibrationObj J ⥤c fundamentalFibrationObj I
   := ⟨ Over.homMk (Over.map u) , fun {X} {Y} φ hφ ↦ automaticallyCart _⟩
 @[simp] lemma idFibration (F : fibration B) : (𝟙 F : F ⥤c F).1 = 𝟙 F.1 := rfl
-@[simp] lemma domainFibrationUnderlying ( A : B) : (domainFibration_obj A).1 = domainOver (A) := rfl
-lemma domainFibration_map_id {K : B} : domainFibration_map (𝟙 K) = 𝟙 (domainFibration_obj K) := by
+@[simp] lemma fundamentalFibrationUnderlying ( A : B) : (fundamentalFibrationObj A).1 = domainOver (A) := rfl
+lemma fundamentalFibration_map_id {K : B} : fundamentalFibrationMap (𝟙 K) = 𝟙 (fundamentalFibrationObj K) := by
     ext
-    rw [domainFibration_map]
+    rw [fundamentalFibrationMap]
     simp
     sorry
-lemma domainFibration_map_comp {K J I : B} (v : K ⟶ J ) ( u : J ⟶ I) :
-  domainFibration_map (v ≫u)  = domainFibration_map v ≫domainFibration_map u := by
+lemma fundamentalFibration_map_comp {K J I : B} (v : K ⟶ J ) ( u : J ⟶ I) :
+  fundamentalFibrationMap (v ≫u)  = fundamentalFibrationMap v ≫  fundamentalFibrationMap u := by
     ext
     simp
     sorry
 
-def domainFibration : B ⥤ fibration B where
-  obj := domainFibration_obj --fun A ↦ discreteIsCartesian (domainIsDiscrete A) -- --
-  map := domainFibration_map --fun u ↦ ⟨ Over.homMk (Over.map u) , fun {X} {Y} φ hφ ↦ automaticallyCart _⟩--
-  map_comp := fun v u ↦ domainFibration_map_comp v u
-  map_id := fun X ↦ domainFibration_map_id
+@[simps] def fundamentalFibration : B ⥤ fibration B where
+  obj := fundamentalFibrationObj --fun A ↦ discreteIsCartesian (domainIsDiscrete A) -- --
+  map := fundamentalFibrationMap --fun u ↦ ⟨ Over.homMk (Over.map u) , fun {X} {Y} φ hφ ↦ automaticallyCart _⟩--
+  map_comp := fun v u ↦ fundamentalFibration_map_comp v u
+  map_id := fun X ↦ fundamentalFibration_map_id
 
 
-/- lemma domainIsDisc : isDiscrete (domainFibration A) := fun {D} {X} {Y} f ↦ by
+/- lemma domainIsDisc : isDiscrete (fundamentalFibration A) := fun {D} {X} {Y} f ↦ by
   let p : X.1 = Y.1 := by
     sorry
   use p

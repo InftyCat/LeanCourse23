@@ -1,6 +1,7 @@
 import Mathlib.CategoryTheory.Over
 import Mathlib.CategoryTheory.EqToHom
 import LeanCourse.Project.FiberedCategories
+import LeanCourse.Project.CartesianComposition
 set_option linter.unusedVariables false
 open Lean Meta Elab Parser Tactic PrettyPrinter
 set_option autoImplicit true
@@ -22,7 +23,7 @@ variable {B : Cat.{v₁ , u₁}} {I J K : B}
 
 -- scoped infixr:80 " ↓ " => fun P A =>obj_over (P:=P.1.hom) A
 
-notation (priority := high) P "[" A "]" => obj_over (P:=P.1.hom) A
+
 class Cleavage (P : fibration B)  : Type (max u₁ v₁) where
   Cart' : ∀ {J I : B} (u : J ⟶ I ) (X: P[I] ) , cartesianLiftOfAlong (P:=P.1.hom) X u
 
@@ -32,16 +33,12 @@ scoped notation u " * " X => (Cart' u X).Y
 variable  {P : fibration B} [Cleavage P]
 -- scoped notation "Cart" u:0 X:0 => (Cart' u X).φ.1 -- would prefer that TODO
 def Cart {J I : B} (u : J ⟶ I) (X : P[I]) : (u * X).1 ⟶ X.1 := (Cart' u X).φ.1 --abbrev seems to yield problems later letting aesop show, that splitfibrations form a category
-def transport   {A A' : B} {u u' : A ⟶ A'} {X : P[A]} {X' : P[A']}
-  (p : u = u') (f : over_hom u X X') : over_hom u' X X' := by
-  use f.1
-  rw [← whisker_eq (CategoryTheory.eqToHom X.2) p]
-  exact f.2
 
-def transportLift {J I : B} {X : P[I]} {u u' : J ⟶ I}(p : u = u')
-  (L : liftOfAlong X u) : liftOfAlong (P:=P.1.hom) X u' := by
-  obtain ⟨  Y , φ ⟩ := L
-  exact ⟨ Y , transport p φ⟩
+
+
+
+
+
 
 def map' {P : fibration B} [Cleavage P] {J I : B} {X Y : P[I]}  (u : J ⟶ I) (α : X ⟶ Y ) :
   ∃! φ : (u*X) ⟶ u * Y , φ.1 ≫ Cart u Y = Cart u X ≫ α.1 := by
@@ -81,3 +78,23 @@ noncomputable def reindexing  {P : fibration B} [Cleavage P] (u : J ⟶ I) : P[I
   map := fun {X}{Y} α ↦ (u ⋆ α).choose
   map_comp := fun {X} {Y} {Z} α β ↦ by symm ; exact (map_comp' u α β)
   map_id := fun X ↦ by symm ; exact map_id' (P:=P) u
+
+def c {P : fibration B} [Cleavage P]  (u : J ⟶ I) (v : K ⟶ J) (X : P[I]) :
+   ∃! α : (v * (u * X)) ≅ (v ≫u ) * X ,
+   (α.hom.1 ≫ Cart (v ≫ u) X) = Cart v (u * X) ≫ Cart u X  := by
+  let Y : cartesianLiftOfAlong X (v ≫u ):=⟨ transLift (Cart' u X).1 (Cart' v (u * X)).1  , compPresCartesian _ _⟩
+  exact cartesianLiftIsUnique (Cart' (v ≫ u) X) Y
+
+
+
+/-
+noncomputable def c {P : fibration B} [Cleavage P]  (u : J ⟶ I) (v : K ⟶ J) :
+  (reindexing u) ⋙ (reindexing v) ≅ reindexing (P:=P) (v ≫ u) := NatIso.ofComponents
+    (by
+    intro X
+
+
+    )
+    ( by sorry)
+
+-/
