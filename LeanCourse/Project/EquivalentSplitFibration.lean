@@ -84,7 +84,7 @@ lemma splitFromDiscrete {P : discreteFibration B} : split (P:=P.1) instCleavageV
 
 
 def Fib (B : Cat) : Cat :=Bundled.of (fibration B)
-@[simps] def yo_obj2 {B : Cat.{v₁,u₁ }} (P : fibration B) : (Fib B) ᵒᵖ ⥤ Cat where
+@[simps] def yoObj {B : Cat.{v₁,u₁ }} (P : fibration B) : (Fib B) ᵒᵖ ⥤ Cat where
   obj := fun Q ↦ ⟨ Q.unop ⟶ P , instCategoryHomFibrationToQuiverToCategoryStructInstCategoryFibration⟩
   map := fun F ↦  (Bicategory.precomposing _ _ P).obj F.unop
 --def precomp {C : Cat.{v₁,u₁}} {D : Cat.{v₂,u₂}} {E : Cat.{v₃,u₃}} (F : C ⥤ D) : (D ⥤ E)  ⥤ (C ⥤ E)
@@ -97,7 +97,7 @@ def Fib (B : Cat) : Cat :=Bundled.of (fibration B)
 
 
 @[simps] def yo  {B : Cat.{v₁,u₁ }} : Fib B ⥤ PShCat (Fib B) where
-  obj := yo_obj2
+  obj := yoObj
   map := fun f ↦ ⟨ fun X ↦  (Bicategory.postcomposing _ _ _).obj f ,  by sorry ⟩
   map_id := fun X ↦ sorry
   map_comp := by sorry
@@ -142,6 +142,186 @@ def E_obj_map_id {I : B} (X : (fundamentalFibration.obj I ⟶ P)) :
 -- def E' : yo ⋙ (PSh_rest (fundamentalFibration (B:=B)))
 
 /-
+lemma SpP {I : B} : (Sp.obj P) ↓ I ≅ Bundled.of (fundamentalFibration.obj I ⟶ P) := by sorry
+-/
+
+lemma weird {I J : Bᵒᵖ} {u : I ⟶ J} : (Over.map u.unop).obj (Over.mk (𝟙 J.unop)) = Over.mk u.unop := by
+  trans Over.mk (𝟙 J.unop ≫ u.unop)
+  · have goal : ((Over.map u.unop).obj (Over.mk (𝟙 J.unop))).hom = (Over.mk (𝟙 J.unop ≫ u.unop)).hom := by apply Over.map_obj_hom
+    sorry
+  · apply congrArg _ ; apply Category.id_comp
+lemma replaceTargetOfFiberMap {X Y : (Sp.obj P).1.1.left} (f : Y ⟶ X) :
+  ((((yoObj P).map (fundamentalFibration.map (f.unop.1.unop)).op).obj X.unop.fiber.unop).1).left.obj (Over.mk (𝟙 Y.unop.1.unop)) =
+      X.unop.2.unop.1.left.obj (Over.mk f.unop.1.unop) := by
+      obtain ⟨⟨ I⟩  , ⟨ X ⟩ ⟩:= X
+      obtain ⟨⟨ J ⟩  , ⟨ Y ⟩ ⟩ := Y
+      obtain ⟨⟨ u ⟩  , ⟨ α ⟩  ⟩ :=f
+      simp ; apply congrArg (X.1.left.obj) ; exact weird
+def fiberMap {X Y : (Sp.obj P).1.1.left} (f : Y ⟶ X) :
+  Y.unop.2.unop.1.left.obj (Over.mk (𝟙 _)) ⟶ X.unop.2.unop.1.left.obj (Over.mk f.unop.1.unop)
+  := by
+    obtain ⟨⟨ I⟩  , ⟨ X ⟩ ⟩:= X
+    obtain ⟨⟨ J ⟩  , ⟨ Y ⟩ ⟩ := Y
+    have this := replaceTargetOfFiberMap f
+    obtain ⟨⟨ u ⟩  , ⟨ α ⟩  ⟩ :=f
+    let fst : Y.1.left.obj (Over.mk (𝟙 J ) ) ⟶ _  :=
+      (α.1.app (Over.mk (𝟙 J)))
+
+    let fst := fst ≫ eqToHom (this)
+    exact fst
+
+@[simp] def E_functor_map {X Y : (Sp.obj P).1.1.left} (f : Y ⟶ X) : ((E'_obj).obj Y.unop.fiber.unop).1 ⟶((E'_obj).obj X.unop.fiber.unop).1  :=
+  fiberMap f ≫ X.unop.2.unop.1.left.map (Over.homMk f.unop.1.unop)
+  /-
+  by
+    obtain ⟨⟨ I⟩  , ⟨ X ⟩ ⟩:= X
+    obtain ⟨⟨ J ⟩  , ⟨ Y ⟩ ⟩ := Y
+
+    obtain ⟨⟨ u ⟩  , ⟨ α ⟩  ⟩ :=f
+
+    simp
+    let fst := fiberMap f
+    %let snd : X.1.left.obj (Over.mk u) ⟶ X.1.left.obj (Over.mk (𝟙 I)):= X.1.left.map (Over.homMk u)
+    exact (fst ≫ snd)
+    -- (↑((((PSh_rest fundamentalFibration).obj (yo.obj P)).map u).obj X)).left.obj (Over.mk (𝟙 J.unop ))
+    -- apply (· ≫ fst )
+    -/
+open Over
+lemma exchangeLaw {C : Cat} {X Y Z W  V : C} {f : X ⟶ Y} {g : Y ⟶Z } {h : Z ⟶ V} {i : V ⟶ W} :
+  f ≫ (g ≫ h) ≫ i = (f ≫ g)  ≫ (h ≫ i) := by
+  rw [Category.assoc , Category.assoc]
+
+lemma compCartTransExt {P Q : fibration B} {F G H:  P ⟶ Q} (η: F ⟶ G) (ε : G ⟶ H) : (η ≫ ε).1 = η.1 ≫ ε.1 := rfl
+def forgetFibration {P Q : fibration B} : (⟨ P ⟶ Q , instCategoryHomFibrationToQuiverToCategoryStructInstCategoryFibration ⟩ : Cat)  ⥤ (P.1.left ⥤ Q.1.left)  where
+  obj := fun F ↦ F.1.left
+  map := fun f ↦ f.1
+lemma E_functor_map_comp  {X' Y' Z' : (Sp.obj P).1.1.left} (g : Z' ⟶Y') (f : Y' ⟶ X') : E_functor_map (g ≫ f) = E_functor_map g ≫ E_functor_map f := by
+    let X:= X'.unop.2.unop
+    let Y:= Y'.unop.2.unop
+    let Z := Z'.unop.2.unop
+
+    let β:= fiberMap g
+
+    let α := fiberMap f
+    rw [E_functor_map ]
+    let v := g.unop.1.unop
+    let u := f.unop.1.unop
+    let v' : mk (v ≫ u) ⟶ mk u := homMk v
+    let v'' :  mk v ⟶ mk (𝟙 _ ) := homMk v
+    have hv' : v' = (Over.map u).map v'' ≫ eqToHom (weird) := by
+      apply OverMorphism.ext
+      simp
+      let m := g.unop.base.unop
+      symm
+      calc
+        m ≫ (eqToHom weird).left
+          = m ≫ (Over.forget _).map (eqToHom weird) := rfl
+        _ = m ≫ eqToHom rfl := by rw [eqToHom_map] ;
+        _ = m  ≫ 𝟙 _ := by rw [eqToHom_refl]
+        _ = m := by apply Category.comp_id
+
+
+    let u' : mk u ⟶ mk (𝟙 _ ) := homMk u
+    let vu : mk (v ≫ u) ⟶mk (𝟙 _ ) := homMk (v ≫ u)
+    let restFunctor := (((PSh_rest fundamentalFibration).obj (yo.obj P)))
+    let a' := f.unop.2.unop
+    let b' := g.unop.2.unop
+
+
+
+    let a : Y.1.left ⟶ ((restFunctor.map ⟨ u ⟩ ).obj X).1.left := a'.1
+    let α2 : Y.1.left.obj (mk v) ⟶X.1.left.obj (mk (v ≫  u))  := a.app (mk v)
+
+
+
+    let h := g ≫ f
+    let b : Z.1.left ⟶ ((restFunctor.map ⟨ v ⟩ ).obj Y).1.left := g.unop.2.unop.1
+    let ab : Z.1.left ⟶ ((restFunctor.map ⟨ v ≫ u ⟩ ).obj X).1.left := h.unop.2.unop.1
+
+    let compPath := congrArg (fun F ↦ (F.obj X).1.left ) (symm ( restFunctor.map_comp ⟨u⟩ ⟨v⟩))
+    -- have test : congrArg (fun x ↦ x.1) compInFiberCrypticPath = compPath := rfl
+
+    let vf : ((restFunctor.map ⟨ v ⟩ ).obj Y).1.left ⟶
+      (((restFunctor.map ⟨ v ≫ u ⟩ ).obj X)).1.left :=
+      ((restFunctor.map ⟨ v ⟩ ).map a').1 ≫ eqToHom compPath
+
+    have complicated : ((restFunctor.map ⟨ v ⟩ ).map a').1.app (mk (𝟙 _)) ≫ eqToHom ((Functor.congr_obj compPath (mk (𝟙 _))).trans (replaceTargetOfFiberMap h)) = eqToHom (replaceTargetOfFiberMap g) ≫ α2 := by sorry
+
+
+
+    have wow : ab = b ≫vf := by calc
+      ab = (g ≫f).unop.fiber.unop.1 := rfl
+      _ = (b' ≫  ((restFunctor.map ⟨ v ⟩ ).map a') ≫ eqToHom compInFiberCrypticPath ).1 := congrArg (fun x ↦ x.1) (compInFiber f g)
+      _ = b'.1 ≫ ((restFunctor.map ⟨ v ⟩ ).map a').1 ≫ eqToHom compPath := by
+        rw [compCartTransExt , compCartTransExt]
+        apply (whisker_eq _)
+        apply (whisker_eq _)
+
+
+        calc (eqToHom (compInFiberCrypticPath (P:=restFunctor))).1 = forgetFibration.map (eqToHom (compInFiberCrypticPath (P:=restFunctor))) := rfl
+        _ = eqToHom compPath := by rw [eqToHom_map]
+
+    have fiberMapComp : fiberMap (g ≫f )  =  β≫ α2 := by
+      calc
+         fiberMap h = ab.app (mk (𝟙 _)) ≫ eqToHom (replaceTargetOfFiberMap h) := rfl
+         _ = ((b.app (mk (𝟙 _))) ≫ vf.app (mk (𝟙 _))) ≫ eqToHom (replaceTargetOfFiberMap h) := by apply eq_whisker _ ; rw [wow] ; rfl
+         _ = b.app (mk (𝟙 _)) ≫ vf.app (mk (𝟙 _)) ≫ eqToHom (replaceTargetOfFiberMap h) := Category.assoc _ _ _
+         _ = b.app (mk (𝟙 _)) ≫ (((restFunctor.map ⟨ v ⟩ ).map a').1.app (mk (𝟙 _)) ≫ (eqToHom compPath).app (mk (𝟙 _) )) ≫ eqToHom (replaceTargetOfFiberMap h) := by rfl
+         _ = b.app (mk (𝟙 _)) ≫ ((restFunctor.map ⟨ v ⟩ ).map a').1.app (mk (𝟙 _)) ≫ eqToHom (Functor.congr_obj compPath (mk (𝟙 _))) ≫ eqToHom (replaceTargetOfFiberMap h) := (whisker_eq _ (by rw [eqToHom_app, Category.assoc]))
+         _ = b.app (mk (𝟙 _)) ≫ eqToHom (replaceTargetOfFiberMap g) ≫ α2 := by
+                                          apply ((b.app (mk (𝟙 _))) ≫= ·);
+                                          --rw [← Category.assoc] ;
+                                          rw [eqToHom_trans]
+                                          exact complicated
+         _ = β ≫ α2 :=  by rw [←Category.assoc ] ; apply eq_whisker _ ; rfl
+
+
+
+    have myNat : Y.1.left.map v''  ≫ α = α2  ≫ X.1.left.map v'
+      := by
+
+
+        have goal : Y.1.left.map v'' ≫ a.app (mk (𝟙 _)) = α2 ≫ ((restFunctor.map ⟨ u ⟩ ).obj _).1.left.map v''  := a.naturality v''
+        have this : α = a.app (mk (𝟙 _ )) ≫ eqToHom (replaceTargetOfFiberMap f) := rfl
+        rw [this , ← Category.assoc , goal, Category.assoc]
+        apply whisker_eq α2
+        have goal : ((restFunctor.map ⟨ u ⟩ ).obj _).1.left.map v'' ≫ eqToHom (replaceTargetOfFiberMap f) = X.1.left.map v' := by
+          rw [hv', Functor.map_comp]
+          apply whisker_eq (((restFunctor.map ⟨ u ⟩ ).obj _).1.left.map v'')
+          symm
+          apply eqToHom_map
+
+
+        exact goal
+    have helper : vu = v'  ≫ u'  := rfl
+
+
+    have xhelper : X.1.left.map vu = X.1.left.map v' ≫ X.1.left.map u' := by rw [← Functor.map_comp , congrArg X.1.left.map helper]
+    have t : (homMk ((g ≫ f).unop.base.unop) : mk (v ≫ u) ⟶mk (𝟙 _ ))  = vu := rfl
+    rw [fiberMapComp , t,  xhelper , ← exchangeLaw, ← myNat , exchangeLaw]
+    simp
+
+
+
+
+
+def E_functor : (Sp.obj P).1.1.left ⥤ P.1.left where
+  obj := fun X ↦ ((E'_obj).obj X.unop.fiber.unop).1
+  map :=  E_functor_map
+
+  map_comp := E_functor_map_comp
+  map_id := by sorry
+
+
+
+
+def E : Sp.obj P ⥤c P := ⟨ by
+
+  sorry , by sorry ⟩
+/-
+
+
+/-
 def pseudoNatural {Q : PShCat B} :=
   { η : {I : B} → Q.obj (Opposite.op I) ⥤ P[I]  //
   ∀ {J I} (u : J ⟶ I) , η ⋙ reindexing u = Q.map u.op ⋙ η  }
@@ -171,41 +351,6 @@ apply Over.homMk
 sorry
 -/
 
-/-
-lemma SpP {I : B} : (Sp.obj P) ↓ I ≅ Bundled.of (fundamentalFibration.obj I ⟶ P) := by sorry
 -/
-lemma weird {I J : Bᵒᵖ} {u : I ⟶ J} : (Over.map u.unop).obj (Over.mk (𝟙 J.unop)) = Over.mk u.unop := by
-  trans Over.mk (𝟙 J.unop ≫ u.unop)
-  · have goal : ((Over.map u.unop).obj (Over.mk (𝟙 J.unop))).hom = (Over.mk (𝟙 J.unop ≫ u.unop)).hom := by apply Over.map_obj_hom
-    sorry
-  · apply congrArg _ ; apply Category.id_comp
 
-
-def E_functor : (Sp.obj P).1.1.left ⥤ P.1.left where
-  obj := fun X ↦ ((E'_obj).obj X.unop.fiber).1
-  map :=  fun {Y} {X}  f ↦ by
-    obtain ⟨I , X⟩:= X
-    obtain ⟨J , Y⟩ := Y
-    obtain ⟨u , α ⟩ :=f
-    simp
-    let fst : _ ⟶ Y.1.left.obj (Over.mk (𝟙 J.unop ) ) :=
-      (α.1.app (Over.mk (𝟙 J.unop)))
-    have this: ((((yo_obj2 P).map (fundamentalFibration.map u.unop).op).obj X).1).left.obj (Over.mk (𝟙 J.unop)) =
-      X.1.left.obj (Over.mk u.unop) := by simp ; apply congrArg (X.1.left.obj) ; exact weird
-    let fst := eqToHom (symm this) ≫ fst
-    let snd :=
-    -- (↑((((PSh_rest fundamentalFibration).obj (yo.obj P)).map u).obj X)).left.obj (Over.mk (𝟙 J.unop ))
-    -- apply (· ≫ fst )
-    f(ID) -> F (U)
-
-
-
-
-    -- apply ((by sorry) ≫ ·  )
-
-
-  map_comp := by sorry
-  map_id := by sorry
-def E : Sp.obj P ⥤c P := ⟨ by
-
-  sorry , by sorry ⟩
+    -/

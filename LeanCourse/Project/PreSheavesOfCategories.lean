@@ -53,7 +53,7 @@ noncomputable def presheafOfCategories_obj (F : splitFibration B) : Bᵒᵖ  ⥤
 notation F "$" => presheafOfCategories_obj F
 @[simp] noncomputable def re {F : splitFibration B} (u : J ⟶ I) : F ↓ I ⟶ F ↓ J := reindexing u
 def fibb {F G : splitFibration B} (α : F ⥤cs G) (I : B) : F ↓ I ⟶ G ↓ I := (α.1) / I
-local notation:70 α " / " I => fibb α I
+scoped notation:70 α " / " I => fibb α I
 noncomputable def appNat{F G : splitFibration B} {α : F ⥤cs G} {u : J ⟶ I} (X : F ↓ I) :
   ((α / I) ≫ re u).obj X ≅ (re u ≫ (α / J)).obj X := eqToIso (Subtype.ext (α.2 u X).choose)
 
