@@ -19,7 +19,7 @@ namespace FiberedCategories
 
 variable {B : Cat.{v₁ , u₁}} {I J K : B}
 notation (priority := high) P "[" A "]" => obj_over (P:=P.1.hom) A
-def  transport  {P : fibration B} {A A' : B} {u u' : A ⟶ A'} {X : P[A]} {X' : P[A']}
+@[simps] def  transport  {P : fibration B} {A A' : B} {u u' : A ⟶ A'} {X : P[A]} {X' : P[A']}
   (p : u = u') (f : over_hom u X X') : over_hom u' X X' := by
   use f.1
   rw [← whisker_eq (CategoryTheory.eqToHom X.2) p]

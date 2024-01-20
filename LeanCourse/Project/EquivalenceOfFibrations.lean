@@ -28,34 +28,49 @@ instance FiberToTotalSpace {P : fibration B} {I : B} : P [ I ] ⥤ P.1.left wher
   obj := fun X ↦ X.1
   map := fun f ↦ f.1
 lemma comm {P Q : fibration B} (F : P ⟶ Q ) : ∀ {A} , P.1.hom.obj A =  Q.1.hom.obj (F.1.left.obj A) :=  fun {A} ↦ by rw [← Functor.comp_obj , ← Over.w F.1] ; apply Functor.congr_obj ; rfl
-def over_hom_comp {K J I : B} {P : fibration B} {u : J ⟶I } {v : K ⟶J } {X : P[I]} {Y:P[J]}{Z:P[K]} (φ: over_hom u Y X) (ψ : over_hom v Z Y) : over_hom (v ≫ u) Z X := (transLift ⟨ _ , φ ⟩ ⟨_ , ψ⟩ ).φ
-def mappingOverHom {P Q : fibration B} (F : P ⟶ Q ) {J I} {u : J ⟶ I} {Y : P [J]} {X : P[I]} (φ : over_hom u Y X) :  over_hom u ((F / J).obj Y) ((F / I).obj X) := by
-  use F.1.left.map φ.1
-  let hφ := φ.2
-  calc
-      (Q.1).hom.map ((F.1).left.map φ.1) ≫ eqToHom (_ : Q.1.hom.obj ((F / I).obj X).1 = I)
-    =  ((Q.1).hom.map ((F.1).left.map φ.1) ≫ eqToHom (symm (comm F))) ≫ eqToHom X.2 := by rw [Category.assoc] ; apply (_ ≫= · ) ; symm ; apply eqToHom_trans
-  _ = (eqToHom (symm (comm F)) ≫ P.1.hom.map (φ.1)) ≫ eqToHom X.2 := by {
-    have veryweird : (F.1.left ⋙ Q.1.hom).map φ.1 = (F.1.left ≫  Q.1.hom).map φ.1 := rfl
-    apply (· =≫ _) ; rw [← Functor.comp_map , veryweird  ,  Functor.congr_hom (Over.w F.1) φ.1 , Category.assoc ,Category.assoc ,  eqToHom_trans , eqToHom_refl] ; aesop
-  }
-  _ = eqToHom (_) ≫ eqToHom (_) ≫ u := by rw [Category.assoc] ; apply (_≫= · ) ; apply φ.2
-  _ = eqToHom (_ : (Q).1.hom.obj ((F / J).obj Y).1 = J) ≫ u := by rw [← Category.assoc] ; apply (· =≫ u) ; apply eqToHom_trans
-  -- have this : u = Q.1.hom.map (F.1.left.map φ.1) := by sorry
+@[simps] def over_hom_comp {K J I : B} {P : fibration B} {u : J ⟶I } {v : K ⟶J } {X : P[I]} {Y:P[J]}{Z:P[K]}
+  (φ: over_hom u Y X) (ψ : over_hom v Z Y) : over_hom (v ≫ u) Z X := (transLift ⟨ _ , φ ⟩ ⟨_ , ψ⟩ ).φ
+@[simps] def over_comp    {K J I : B} {P : fibration B} {u : J ⟶I } {v : K ⟶J } {w : K ⟶ I} {X : P[I]} {Y:P[J]}{Z:P[K]}
+  (comm : v ≫ u = w)
+  (φ: over_hom u Y X) (ψ : over_hom v Z Y) : over_hom w Z X
+  := transport comm (over_hom_comp φ ψ)
+-- lemma over_comp_coe
 
-def cartesianMorphismToCartLift (P : Over B ) {I : B} {X : obj_over (P:=P.hom) I} { Y : P.1}  {φ : Y ⟶ X.1} (hφ : isCartesianMorphism  P φ) : cartesianLiftOfAlong X (P.hom.map φ ≫ eqToHom X.2) where
-  Y := ⟨ Y , rfl⟩
-  φ := ⟨ φ  , by aesop⟩
-  isCart := by sorry --apply compPresCartesian -- sorry --hφ
-def weakCartMorphism {P : Over B} {X Y : P.left} (φ: Y ⟶ X) :=
-  ∀ {Y' : obj_over (P:=P.hom) (P.hom.obj Y)} (f : over_hom (P.hom.map φ) Y' ⟨ X , rfl⟩ )  ,
-  ∃! f' : Y' ⟶ ⟨ Y , rfl⟩  , f'.1 ≫ φ =f.1
+/-
+def cartLiftToCartMor {P : fibration B } {J I : B} {u : J ⟶ I} {X : obj_over (P:=P.1.hom) I}
+  (L : cartesianLiftOfAlong X u) :  isCartesianMorphism P.1 L.φ.1 := fun v' K ↦ by
+    let X' : obj_over (P.1.hom.obj X.1) := ⟨ X.1 , rfl⟩
+    let L' : liftOfAlong X' (P.1.hom.map L.φ.1) := morphismToLift L.φ.1
+    let Y' : obj_over (P.1.hom.obj L.Y.1):= L'.Y -- ⟨ L.Y.1 , rfl⟩
+    let Y := L.Y
+    let v : _ ⟶ J:=v' ≫ eqToHom Y.2
+    let u' := u ≫ eqToHom (symm X.2)
+    have trick : v' ≫ P.1.hom.map L.φ.1 = v ≫ u' := by
+      rw [Category.assoc] ;
+      apply (_≫=·) ;
+      have goal := eq_whisker L.φ.2 (eqToHom (symm X.2))
+      rw [← Category.assoc , ←goal ]
+      rw [Category.assoc , eqToHom_trans , eqToHom_refl]
+      aesop
 
+    have trick : (v' ≫ P.1.hom.map L.φ.1) ≫eqToHom X.2 = v ≫ u := by rw [trick] ; aesop
+    -- let iX : over_hom ()
+    let μ : over_hom (v ≫ u) K.1 X := over_comp trick (⟨ 𝟙 _ , by aesop⟩ ) (K.φ)
 
- theorem postCompCartesianMorphism {P : fibration B} { Y Z : P.1.left} {φ: Y ⟶ Z } (hφ:  isCartesianMorphism P.1 φ)  : Function.Bijective (fun (f : Y ⟶ Y) ↦ f ≫ φ):= by sorry
---lemma cartLiftVsCartMorph (P : fibration B) { I : B} {X :  P [ I ]}{Y : P.1.left} (φ: Y ⟶ X.1) : isCartesianMorphism φ ↔ isCartesian ()
+    obtain ⟨ψ , hψ⟩   :=  L.2 _ ⟨  _ , μ⟩
+    have p : (v' ≫ eqToHom Y.2) ≫ eqToHom (Y.2.symm) = v' := by aesop
+
+    let ψ' : over_hom v' K.Y Y' := over_comp p (⟨ 𝟙 _ , by aesop⟩ ) ψ
+    use ψ'
+    constructor
+    -- rw [over_comp_coe]
+
+    sorry
+-/
+
 theorem Fullness {F : P ⟶ Q}: (∀ (I : B) ,  IsEquivalence (F / I) ) → (∀ Y X : P.1.left , Function.Surjective (F.1.left.map : (Y ⟶ X) → (F.1.left.obj Y ⟶ F.1.left.obj X))) := by
-
+      sorry
+      /-
       intro ass
       intro Y X
 
@@ -67,19 +82,24 @@ theorem Fullness {F : P ⟶ Q}: (∀ (I : B) ,  IsEquivalence (F / I) ) → (∀
       let Xf : obj_over I := ⟨X , comm F⟩
       let Yf : obj_over J := ⟨Y , comm F⟩
       obtain ⟨⟨ Y' , φ⟩  , hφ⟩   := P.2 u Xf
-      have goal : weakCartMorphism (P:=Q.1) (F'.map φ.1) := by sorry
+      have isCart : isCartesianMorphism P.1 φ.1 := cartLiftToCartMor ⟨_ , hφ⟩
+
+      have goal : isWeakCartesian (P:=Q.1.hom) (morphismToLift (F'.map φ.1)) := weakCartifCartesian ⟨_ , F.2 _ isCart⟩
       have p : Q.1.hom.obj (F'.obj Y) = Q.1.hom.obj (F'.obj Y'.1) := by
         calc
               _ = P.1.hom.obj Y' := symm (Y'.2)
              _ = _ := comm F
-      let Fφ1 : over_hom u ((F / J).obj  Y') ((F / I).obj Xf) := mappingOverHom F (u:=u) φ
-      let helpMorp : over_hom (eqToHom (symm p)) (⟨ F'.obj Y , p⟩ ) Y' := by sorry
 
       let Fφ : over_hom (P:=Q.1.hom) (((Q.1).hom.map (F'.map φ.1))) ⟨ F'.obj Y , p ⟩ ⟨ F'.obj X , rfl⟩  := by
         use f
-
-/-
-      obtain ⟨ g     , hg⟩  := goal (Y':=⟨ F'.obj Y , p ⟩ ) Fφ
+        rw [← Functor.comp_map]
+        have rwr : (F' ⋙ Q.1.hom).map φ.1 = _ := Functor.congr_hom (Over.w F.1) φ.1
+        rw [rwr]
+        rw [φ.2]
+        rw [←Category.assoc,eqToHom_trans]
+        rw [←Category.assoc,eqToHom_trans]
+        aesop
+      obtain ⟨ g , hg⟩  := goal ⟨ _ , Fφ⟩
 
       let J' := Q.1.hom.obj (F'.obj Y'.1)
       let Y1 : obj_over J' := ⟨ Y  , (comm F).trans p⟩
@@ -88,7 +108,7 @@ theorem Fullness {F : P ⟶ Q}: (∀ (I : B) ,  IsEquivalence (F / I) ) → (∀
       have p2 : (F / J').obj Y1'  = ⟨F'.obj Y'.1 , rfl⟩ := rfl
 
       let pre_g  : Y1 ⟶ Y1' := (Equivalence.fullOfEquivalence (F / J')).preimage (eqToHom p1 ≫ g ≫ eqToHom (symm p2))  --: Yf ⟶ Y'
-      let pre_gh : F.1.left.map pre_g.1 = (eqToHom p1).1 ≫ g.1 ≫ (eqToHom (symm p2)).1 := by calc
+      have pre_gh : F.1.left.map pre_g.1 = (eqToHom p1).1 ≫ g.1 ≫ (eqToHom (symm p2)).1 := by calc
         F.1.left.map pre_g.1
           = ((F / J').map pre_g).1 := rfl
         _ = (eqToHom p1 ≫ g ≫ eqToHom (symm p2)).1 := by rw [(Equivalence.fullOfEquivalence (F / J')).witness (eqToHom p1 ≫ g ≫ eqToHom (symm p2)) ]
@@ -104,17 +124,14 @@ theorem Fullness {F : P ⟶ Q}: (∀ (I : B) ,  IsEquivalence (F / I) ) → (∀
       · rfl
       · exact eq_whisker (by rw [eqToHom_refl] ; aesop) (F.1.left.map φ.1)
 
-
-
-
-      --let L : cartesianLiftOfAlong ((F / _).obj ⟨ X , rfl⟩) u := (cartesianMorphismToCartLift Q.1 (F.2 φ.1 (by sorry))) --⟨ ⟨  _ , mappingOverHom F u φ⟩  , F.2 (by sorry)⟩
-      /-
-      have weakCart : isWeakCartesian ⟨ _ , mappingOverHom F φ⟩  := by
-        exact weakCartifCartesian L
-      let m : ⟨ Y , comm F⟩  ⟶ Y' := by
-        let ψ:=  (weakCart ⟨ ⟨ F'.obj Y , by aesop⟩   , by sorry ⟩).choose --obtain ⟨ m' , hm'⟩
-        let hψ :=(weakCart ⟨ ⟨ F'.obj Y , by aesop⟩   , by sorry ⟩).choose_spec --obtain ⟨ m' , hm'⟩
+  -/
 /-
+ have fullyFaithfull : ∀ Y X : P.1.left , Function.Bijective (F'.map : (Y ⟶ X) → (F'.obj Y ⟶ F'.obj X))   := fun Y X ↦ by
+    constructor
+    · sorry
+    · exact
+-/
+
 theorem equivalenceOfFibrationsCheckOnFibers : (∀ (I : B) ,  IsEquivalence (F / I) ) → IsEquivalence F.1.left := fun ass ↦ by
   let F' := F.1.left
   have essSurj : EssSurj F' :=  by
@@ -126,12 +143,13 @@ theorem equivalenceOfFibrationsCheckOnFibers : (∀ (I : B) ,  IsEquivalence (F 
     use p.1
     constructor
     apply FiberToTotalSpace.mapIso hp
-  have fullyFaithfull : ∀ Y X : P.1.left , Function.Bijective (F'.map : (Y ⟶ X) → (F'.obj Y ⟶ F'.obj X))   := fun Y X ↦ by
+
+  have full : Full F' := by
     constructor
-    · sorry
-    · Fullness ass
-  have full : Full F' := by sorry
+    swap
+    ·  intro X Y f ; exact (Fullness ass _ _ f).choose
+
+    ·  intro X Y f ; exact (Fullness ass _ _ f).choose_spec
   have faithfull : Faithful F' := by sorry
 
   apply Equivalence.ofFullyFaithfullyEssSurj
--/
