@@ -14,6 +14,7 @@ import LeanCourse.Project.DiscreteFibration
 import LeanCourse.Project.SplitFibrationViaGrothendieck
 import LeanCourse.Project.FibrationBicategory
 import LeanCourse.Project.CounitOnFibers
+import LeanCourse.Project.CartesianFunctors
 set_option linter.unusedVariables false
 open Lean Meta Elab Parser Tactic PrettyPrinter
 set_option autoImplicit true
@@ -75,7 +76,7 @@ def idCartLift {X : P [I]} : cartesianLiftOfAlong X (𝟙 _) := by
 
 
 
-theorem equivOnFibers : IsEquivalence E := by
+theorem equivOnFibers [Cleavage P] : IsEquivalence E := by
   have essSurj : EssSurj E := by
     constructor
     intro X
@@ -103,7 +104,7 @@ theorem equivOnFibers : IsEquivalence E := by
 
       · apply NatTrans.mk ; swap
         · intro u
-          refine sorry
+          --exact (reindexing u.hom).map f
         · sorry
       · sorry
 

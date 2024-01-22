@@ -13,6 +13,7 @@ import LeanCourse.Project.PreSheavesOfCategories
 import LeanCourse.Project.DiscreteFibration
 import LeanCourse.Project.SplitFibrationViaGrothendieck
 import LeanCourse.Project.FibrationBicategory
+import LeanCourse.Project.CartesianFunctors
 set_option linter.unusedVariables false
 open Lean Meta Elab Parser Tactic PrettyPrinter
 set_option autoImplicit true
@@ -32,8 +33,6 @@ universe v₁ u₁ --v₂ u₁ u₂
 namespace FiberedCategories
 -- variable {B : Cat.{v₁ , v₁}} {I J K : B}
 instance {B : Cat.{v₁ , v₁}} {I : B}  : Category (Over I) := commaCategory
-
-@[simp] noncomputable def cartesianLiftFromFibration (P : fibration B) {J I} (u : J ⟶ I) (X : P[I]) : cartesianLiftOfAlong X u := ⟨(P.2 u X).choose , (P.2 u X).choose_spec⟩
 
 
 
