@@ -83,7 +83,13 @@ theorem Fullness {F : P ⟶ Q}: (∀ (I : B) ,  IsEquivalence (F / I) ) → (∀
       symm
       trans (g.1 ≫ F.1.left.map φ.1)
       · rfl
-      · exact eq_whisker (by rw [eqToHom_refl, eqToHom_refl , FiberToTotalSpace.map_id , FiberToTotalSpace.map_id, Category.comp_id , Category.id_comp]) (F.1.left.map φ.1) -- aesop
+      · exact eq_whisker (by
+        rw [eqToHom_refl, eqToHom_refl] ; symm ;
+        calc
+        _ = FiberToTotalSpace.map (𝟙 _) ≫ FiberTotalSpace.map g ≫ FiberTotalSpace.map (𝟙 _) := by rfl
+        _ = FiberToTotalSpace.map g := by rw [FiberToTotalSpace.map_id , FiberToTotalSpace.map_id, Category.comp_id , Category.id_comp]
+        _ = g.1 := by rfl)
+        (F.1.left.map φ.1) -- aesop
 
 
 

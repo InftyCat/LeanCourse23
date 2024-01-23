@@ -32,7 +32,8 @@ open Cleavage
 scoped notation u " * " X => (Cart' u X).Y
 variable  {P : fibration B} [Cleavage P]
 -- scoped notation "Cart" u:0 X:0 => (Cart' u X).φ.1 -- would prefer that TODO
-def Cart {J I : B} (u : J ⟶ I) (X : P[I]) : (u * X).1 ⟶ X.1 := (Cart' u X).φ.1 --abbrev seems to yield problems later letting aesop show, that splitfibrations form a category
+-- notation "Cart u X => (Cart' u X).φ.1
+@[simp] def Cart {J I : B} (u : J ⟶ I) (X : P[I]) : (u * X).1 ⟶ X.1 := (Cart' u X).φ.1 --abbrev seems to yield problems later letting aesop show, that splitfibrations form a category
 
 
 
@@ -40,16 +41,17 @@ def Cart {J I : B} (u : J ⟶ I) (X : P[I]) : (u * X).1 ⟶ X.1 := (Cart' u X).�
 
 
 
-def map' {P : fibration B} [Cleavage P] {J I : B} {X Y : P[I]}  (u : J ⟶ I) (α : X ⟶ Y ) :
-  ∃! φ : (u*X) ⟶ u * Y , φ.1 ≫ Cart u Y = Cart u X ≫ α.1 := by
-    let sth : isCartesian (Cart' u Y).1 := (Cart' u Y).isCart
-    let lift : liftOfAlong Y (u ≫ 𝟙 I) := transLift ⟨ _ , coercBack α⟩  (Cart' u X).1
+def map' {P : fibration B} {J I : B} {X Y : P[I]}  (u : J ⟶ I) (α : X ⟶ Y )
+  (uX : cartesianLiftOfAlong X u) (uY : cartesianLiftOfAlong Y u):
+  ∃! φ : uX.Y ⟶ uY.Y , φ.1 ≫ uY.φ.1 = uX.φ.1 ≫ α.1 := by
+
+    let lift : liftOfAlong Y (u ≫ 𝟙 I) := transLift ⟨ _ , coercBack α⟩  (uX).1
     let lift' : liftOfAlong Y (u ) := transportLift (by rw [Category.comp_id ]) lift
-    exact (weakCartifCartesian (Cart' u Y) lift')
+    exact (weakCartifCartesian (uY) lift')
 
 
     -- exact uniq
-notation u " ⋆ " f => map' u f
+notation u " ⋆ " f => map' u f (Cart' u _) (Cart' u _)
 --notation (priority := high) u " ⋆ " f => map' u f
 
 lemma map_comp'  (u : J ⟶ I) {X Y Z : P[I]}
@@ -60,7 +62,7 @@ lemma map_comp'  (u : J ⟶ I) {X Y Z : P[I]}
     apply hcomp.2
     have hφ : ((u ⋆ α).choose).1 ≫ (Cart (u) (Y)) =  (Cart u X) ≫ α.1 := hφ
     have hψ : ((u ⋆ β).choose).1 ≫ Cart u Z =  Cart u Y ≫ β.1 := hψ
-    have ass : Cart u X ≫ (α ≫ β).1 = (Cart u X ≫ α.1) ≫ β.1 := by
+    have ass : (Cart' u X).φ.1 ≫ (α ≫ β).1 = ((Cart' u X).φ.1 ≫ α.1) ≫ β.1 := by
       rw [Category.assoc] ;
       simp
     rw [ass]

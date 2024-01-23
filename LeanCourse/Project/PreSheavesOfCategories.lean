@@ -26,7 +26,9 @@ universe v₁ u₁ t₁ s₁  --v₂ u₁ u₂
 
 namespace FiberedCategories
 --attribute[ext] Functor
-
+@[simps] instance FiberToTotalSpace {B : Cat} {P : Over B} {I : B} : obj_over (P:=P.hom) I ⥤ P.left where
+  obj := fun X ↦ X.1
+  map := fun f ↦ f.1
 def extFunctor {C D : Cat} {F G : C ⥤ D}
   (η : F ⟶ G)
  (isLevelwiseIdent : ∀ X : C , isIdentity (η.app X) ) : F = G :=
@@ -78,7 +80,11 @@ lemma natHelper {F G : splitFibration B} (α : F ⥤cs G) (u : J ⟶ I)
  (f : X ⟶ Y)
  : ((appNat X).hom ≫ (α / J).map ((re u).map f) ≫ (appNat Y).inv).1 ≫ Cart u ((α / I).obj Y) =
    Cart u ((α / I).obj X) ≫ ((α / I).map f).1 := by
-      have obs3' : ∀ {Z : ↑(F ↓ I) } ,  (appNat Z).hom.1 = eqToHom ((α.2 u Z).choose) := fun {Z} ↦ by rw [appNat , eqToIso.hom] ; sorry
+      have obs3' : ∀ {Z : ↑(F ↓ I) } ,  (appNat Z).hom.1 = eqToHom ((α.2 u Z).choose) := fun {Z} ↦ by
+        rw [appNat , eqToIso.hom] ;
+        trans FiberToTotalSpace.map ((appNat Z).hom) ;
+        ·  rfl ;
+        · unfold appNat; rw [eqToIso.hom , eqToHom_map FiberToTotalSpace]
       have obs1 : (appNat Y).inv.1 ≫ (Cart u ((α / I).obj Y)) = (α%).map (Cart u Y)  := by
         let myiso : (((α / I) ≫ re u).obj Y ).1 ≅ ((re u ≫ (α / J)).obj Y ).1 := undAppNat Y
         have myIsoInv : myiso.inv = (appNat Y).inv.1 := rfl
@@ -95,8 +101,12 @@ lemma natHelper {F G : splitFibration B} (α : F ⥤cs G) (u : J ⟶ I)
       have obs3 : (appNat X).hom.1 ≫  (α %).map (Cart u X) = Cart u ((α / I).obj X) := by rw [eq_whisker obs3' _] ; exact (α.2 u X).choose_spec
       calc
             ((appNat X).hom ≫ (α / J).map ((re u).map f)       ≫ (appNat Y).inv).1 ≫ Cart u ((α / I).obj Y)
-          = ((appNat X).hom.1 ≫ m α J ((re u).map f) ≫ (appNat Y).inv.1) ≫ Cart u ((α / I).obj Y)   := by sorry
-        _ = ((appNat X).hom.1 ≫ m α J ((re u).map f)) ≫ (appNat Y).inv.1 ≫ Cart u ((α / I).obj Y)   := by aesop_cat
+          = FiberToTotalSpace.map ((appNat X).hom ≫ (α / J).map ((re u).map f)       ≫ (appNat Y).inv) ≫ Cart u ((α / I).obj Y) := rfl
+        _ = (FiberToTotalSpace.map (appNat X).hom ≫ FiberToTotalSpace.map ((α / J).map ((re u).map f))       ≫ FiberToTotalSpace.map ((appNat Y).inv)) ≫ Cart u ((α / I).obj Y) := by apply (· =≫ Cart u ((α / I).obj Y)  ) ; rw [← FiberToTotalSpace.map_comp,← FiberToTotalSpace.map_comp ]
+        _ = FiberToTotalSpace.map (appNat X).hom ≫ FiberToTotalSpace.map ((α / J).map ((re u).map f))       ≫ FiberToTotalSpace.map ((appNat Y).inv) ≫ Cart u ((α / I).obj Y) := by rw [Category.assoc] ; apply (_≫=·) ; rw [Category.assoc]
+        _ = ((appNat X).hom.1 ≫ m α J ((re u).map f) ≫ (appNat Y).inv.1) ≫ Cart u ((α / I).obj Y)   := by unfold m ; aesop
+        _ = (((appNat X).hom.1 ≫ m α J ((re u).map f)) ≫ (appNat Y).inv.1) ≫ Cart u ((α / I).obj Y)   := by apply (· =≫ _) ; rw [← Category.assoc]
+        _ = ((appNat X).hom.1 ≫ m α J ((re u).map f)) ≫ (appNat Y).inv.1 ≫ Cart u ((α / I).obj Y)   := by rw [Category.assoc]
         _ = ((appNat X).hom.1 ≫ m α J ((re u).map f)) ≫ (α%).map (Cart u Y)               := whisker_eq _ obs1
         _ = (appNat X).hom.1 ≫  m α J ((re u).map f) ≫ (α%).map (Cart u Y)                  := by rw [Category.assoc]
         _ = (appNat X).hom.1 ≫ (α %).map (Cart u X) ≫ m α I f                               := whisker_eq _ obs2

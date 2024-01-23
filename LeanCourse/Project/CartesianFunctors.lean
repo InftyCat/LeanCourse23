@@ -108,9 +108,7 @@ def cartFunctorPresCartLifts {I : B} {X : obj_over (P:=P.1.hom) I} {u : J ⟶I }
       --, by apply cartesianMorphismToCartLift ; sorry ⟩
   sorry
 -/
-@[simps] instance FiberToTotalSpace {P : Over B} {I : B} : obj_over (P:=P.hom) I ⥤ P.left where
-  obj := fun X ↦ X.1
-  map := fun f ↦ f.1
+
 theorem FullyFaithfullCartFunctorReflectsCartMorph ( full :  Full F.1.left) (faithful : Faithful F.1.left) :
   (∀ (Y X : P.1.left) (f : Y ⟶X) (hf : isCartesianMorphism Q.1 (F.1.left.map f)) , isCartesianMorphism P.1 f) := fun Y X f hf ↦ by
     let F':= F.1.left

@@ -88,11 +88,11 @@ lemma strongDiscreteness {A : B} (u : J ⟶ I ) (X : obj_over I)
 -/
 lemma domainIsDiscrete (A : B) : isDiscreteOverB (domainOver A) := fun {J I} u X ↦ by use (domainLift u X) ; sorry
 
-def automaticallyCart {P : Over B} {X Y : P.left} (f : X ⟶ Y) : isCartesianMorphism P f := by sorry
+def automaticallyCart {P : Over B} (q : isDiscreteOverB P) {X Y : P.left} (f : X ⟶ Y) : isCartesianMorphism P f := by sorry
 
 @[simp] def fundamentalFibrationObj (A : B) : fibration B := discreteIsCartesian (domainIsDiscrete A)
 @[simp] def fundamentalFibrationMap {J I : B} (u : J ⟶ I) : fundamentalFibrationObj J ⥤c fundamentalFibrationObj I
-  := ⟨ Over.homMk (Over.map u) , fun {X} {Y} φ hφ ↦ automaticallyCart _⟩
+  := ⟨ Over.homMk (Over.map u) , fun {X} {Y} φ hφ ↦ automaticallyCart (domainIsDiscrete I) _⟩
 @[simp] lemma idFibration (F : fibration B) : (𝟙 F : F ⥤c F).1 = 𝟙 F.1 := rfl
 @[simp] lemma fundamentalFibrationUnderlying ( A : B) : (fundamentalFibrationObj A).1 = domainOver (A) := rfl
 lemma fundamentalFibration_map_id {K : B} : fundamentalFibrationMap (𝟙 K) = 𝟙 (fundamentalFibrationObj K) := by
