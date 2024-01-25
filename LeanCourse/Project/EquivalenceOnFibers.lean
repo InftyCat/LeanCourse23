@@ -12,6 +12,7 @@ import LeanCourse.Project.Cleavage
 import LeanCourse.Project.FibrationBicategory
 import LeanCourse.Project.CounitOnFibers
 import LeanCourse.Project.CartesianFunctors
+--import LeanCourse.Project.PreSheavesOfCategories
 set_option linter.unusedVariables false
 open Lean Meta Elab Parser Tactic PrettyPrinter
 set_option autoImplicit true
@@ -28,9 +29,10 @@ universe v₁ u₁ --v₂ u₁ u₂
 
 
 namespace FiberedCategories
+
  variable {B : Cat.{v₁ , v₁}} {I : B}
  variable {P : fibration B}
- notation "E" => E'_obj (P:=P) (I:=I)
+ local notation "E" => E'_obj (P:=P) (I:=I)
  notation u  "°" X => cartesianLiftFromFibration P u X
 def idCartLift {X : P [I]} : cartesianLiftOfAlong X (𝟙 _) := by
       use ⟨ X , ⟨ 𝟙 _ , by aesop ⟩ ⟩
@@ -68,7 +70,7 @@ def idCartLift {X : P [I]} : cartesianLiftOfAlong X (𝟙 _) := by
 
 
   · sorry
-
+  sorry
 
 
 def cartesianMorphismToCartLift {P : Over B } {I : B} {X : obj_over (P:=P.hom) I} { Y : P.1}  {φ : Y ⟶ X.1}
@@ -78,7 +80,7 @@ def cartesianMorphismToCartLift {P : Over B } {I : B} {X : obj_over (P:=P.hom) I
   Y := ⟨ Y , rfl⟩
   φ := ⟨ φ  , by aesop⟩
   isCart := by sorry --apply compPresCartesian -- sorry --hφ
-theorem equivOnFibers [Cleavage P] : IsEquivalence E := by
+theorem equivOnFibers : IsEquivalence E := by
 
   have essSurj : EssSurj E := by
     constructor
@@ -147,3 +149,4 @@ theorem equivOnFibers [Cleavage P] : IsEquivalence E := by
 
   have faithful : Faithful E := by sorry
   apply Equivalence.ofFullyFaithfullyEssSurj
+-- theorem

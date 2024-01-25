@@ -4,6 +4,7 @@ import Mathlib.CategoryTheory.Equivalence
 import LeanCourse.Project.FiberedCategories
 import LeanCourse.Project.CartesianComposition
 import LeanCourse.Project.CartesianFunctors
+import LeanCourse.Project.PreSheavesOfCategories
 set_option linter.unusedVariables false
 open Lean Meta Elab Parser Tactic PrettyPrinter
 set_option autoImplicit true
@@ -65,7 +66,8 @@ theorem Fullness {F : P ⟶ Q}: (∀ (I : B) ,  IsEquivalence (F / I) ) → (∀
       have p2 : (F / J').obj Y1'  = ⟨F'.obj Y'.1 , rfl⟩ := rfl
 
       let pre_g  : Y1 ⟶ Y1' := (Equivalence.fullOfEquivalence (F / J')).preimage (eqToHom p1 ≫ g ≫ eqToHom (symm p2))  --: Yf ⟶ Y'
-      have pre_gh : F.1.left.map pre_g.1 = (eqToHom p1).1 ≫ g.1 ≫ (eqToHom (symm p2)).1 := by calc
+      have pre_gh : F.1.left.map pre_g.1 = (eqToHom p1).1 ≫ g.1 ≫ (eqToHom (symm p2)).1 := by
+        calc
         F.1.left.map pre_g.1
           = ((F / J').map pre_g).1 := rfl
         _ = (eqToHom p1 ≫ g ≫ eqToHom (symm p2)).1 := by rw [(Equivalence.fullOfEquivalence (F / J')).witness (eqToHom p1 ≫ g ≫ eqToHom (symm p2)) ]
@@ -83,13 +85,16 @@ theorem Fullness {F : P ⟶ Q}: (∀ (I : B) ,  IsEquivalence (F / I) ) → (∀
       symm
       trans (g.1 ≫ F.1.left.map φ.1)
       · rfl
-      · exact eq_whisker (by
+      · apply (· =≫ F.1.left.map φ.1)
         rw [eqToHom_refl, eqToHom_refl] ; symm ;
         calc
-        _ = FiberToTotalSpace.map (𝟙 _) ≫ FiberTotalSpace.map g ≫ FiberTotalSpace.map (𝟙 _) := by rfl
-        _ = FiberToTotalSpace.map g := by rw [FiberToTotalSpace.map_id , FiberToTotalSpace.map_id, Category.comp_id , Category.id_comp]
-        _ = g.1 := by rfl)
-        (F.1.left.map φ.1) -- aesop
+        _ = FiberToTotalSpace.map (𝟙 _) ≫ FiberToTotalSpace.map g ≫ FiberToTotalSpace.map (𝟙 _) := by rfl
+        _ = 𝟙 _ ≫ FiberToTotalSpace.map g ≫ FiberToTotalSpace.map (𝟙 _) := by apply (· =≫_) ; rw [FiberToTotalSpace.map_id]
+        _ = FiberToTotalSpace.map g ≫ FiberToTotalSpace.map (𝟙 _) :=by apply Category.id_comp
+        _ = FiberToTotalSpace.map g  ≫ 𝟙 _ := by apply (FiberToTotalSpace.map g ≫= · ) ; rw [FiberToTotalSpace.map_id]
+        _ = FiberToTotalSpace.map g := by apply Category.comp_id
+        _ = g.1 := by rfl
+       -- (F.1.left.map φ.1) -- aesop
 
 
 

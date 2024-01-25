@@ -24,9 +24,9 @@ variable {B : Cat.{v₁ , u₁}} {I J K : B}
 
 variable {P Q : fibration B}(F : P ⟶ Q)
 lemma comm  : ∀ {A} , P.1.hom.obj A =  Q.1.hom.obj (F.1.left.obj A) :=  fun {A} ↦ by rw [← Functor.comp_obj , ← Over.w F.1] ; apply Functor.congr_obj ; rfl
-@[simps] def over_hom_comp {K J I : B} {P : fibration B} {u : J ⟶I } {v : K ⟶J } {X : P[I]} {Y:P[J]}{Z:P[K]}
+def over_hom_comp {K J I : B} {P : fibration B} {u : J ⟶I } {v : K ⟶J } {X : P[I]} {Y:P[J]}{Z:P[K]}
   (φ: over_hom u Y X) (ψ : over_hom v Z Y) : over_hom (v ≫ u) Z X := (transLift ⟨ _ , φ ⟩ ⟨_ , ψ⟩ ).φ
-@[simps] def over_comp    {K J I : B} {P : fibration B} {u : J ⟶I } {v : K ⟶J } {w : K ⟶ I} {X : P[I]} {Y:P[J]}{Z:P[K]}
+@[simps!] def over_comp    {K J I : B} {P : fibration B} {u : J ⟶I } {v : K ⟶J } {w : K ⟶ I} {X : P[I]} {Y:P[J]}{Z:P[K]}
   (comm : v ≫ u = w)
   (φ: over_hom u Y X) (ψ : over_hom v Z Y) : over_hom w Z X
   := transport comm (over_hom_comp φ ψ)
@@ -143,7 +143,7 @@ theorem FullyFaithfullCartFunctorReflectsCartMorph ( full :  Full F.1.left) (fai
 
 
 
-
+    Remark
     The problem why this is very difficult for me is the following: I have to cartesianLifts along maps which coincide up to an identification of the source.
     Hence I cant directly apply that cartesianLiftsAre unique to conclude, that the two lifts coincide up to canonical isomorphism in the source.
     So I have to composewith a cartesian lift along the identification. But now its hard to deduce the isomorphism between the correct sources.

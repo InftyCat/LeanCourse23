@@ -102,7 +102,8 @@ def Fib (B : Cat) : Cat :=Bundled.of (fibration B)
   map_id := fun X ↦ sorry
   map_comp := by sorry
 def U (P : splitFibration B) : fibration B := P.1
-def Sp {B : Cat} : (Fib B) ⥤ splitFibration B := yo ⋙ (PSh_rest (fundamentalFibration (B:=B))) ⋙ Grothendieck
+def psh {B : Cat} : (Fib B) ⥤ PShCat B := yo ⋙ (PSh_rest (fundamentalFibration (B:=B)))
+def Sp {B : Cat} : (Fib B) ⥤ splitFibration B := psh ⋙ Grothendieck
 -- def myId {B : Cat} {I : ↑ B} : obj_over (P:=fundamentalFibration.obj I) I := ⟨ Over.mk (𝟙 I ) , rfl ⟩
 
 variable {P : fibration B}

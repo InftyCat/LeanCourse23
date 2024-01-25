@@ -5,6 +5,7 @@ import Mathlib.CategoryTheory.Opposites
 import Mathlib.CategoryTheory.Bicategory.Basic
 import Mathlib.CategoryTheory.Functor.Category
 import Mathlib.CategoryTheory.EqToHom
+import Mathlib.CategoryTheory.Equivalence
 
 import LeanCourse.Project.FiberedCategories
 import LeanCourse.Project.Cleavage
@@ -14,6 +15,9 @@ import LeanCourse.Project.DiscreteFibration
 import LeanCourse.Project.SplitFibrationViaGrothendieck
 import LeanCourse.Project.FibrationBicategory
 import LeanCourse.Project.CounitOnFibers
+import LeanCourse.Project.EquivalenceOfFibrations
+import LeanCourse.Project.EquivalenceOnFibers
+
 set_option linter.unusedVariables false
 open Lean Meta Elab Parser Tactic PrettyPrinter
 set_option autoImplicit true
@@ -86,7 +90,8 @@ lemma compCartTransExt {P Q : fibration B} {F G H:  P ⟶ Q} (η: F ⟶ G) (ε :
 def forgetFibration {P Q : fibration B} : (⟨ P ⟶ Q , instCategoryHomFibrationToQuiverToCategoryStructInstCategoryFibration ⟩ : Cat)  ⥤ (P.1.left ⥤ Q.1.left)  where
   obj := fun F ↦ F.1.left
   map := fun f ↦ f.1
-lemma E_functor_map_comp  {X' Y' Z' : (Sp.obj P).1.1.left} (g : Z' ⟶Y') (f : Y' ⟶ X') : E_functor_map (g ≫ f) = E_functor_map g ≫ E_functor_map f := by
+lemma E_functor_map_comp  {X' Y' Z' : (Sp.obj P).1.1.left} (g : Z' ⟶Y') (f : Y' ⟶ X') : E_functor_map (g ≫ f) = E_functor_map g ≫ E_functor_map f := by sorry
+/-
     let X:= X'.unop.2.unop
     let Y:= Y'.unop.2.unop
     let Z := Z'.unop.2.unop
@@ -194,6 +199,7 @@ lemma E_functor_map_comp  {X' Y' Z' : (Sp.obj P).1.1.left} (g : Z' ⟶Y') (f : Y
 
 
 
+-/
 
 
 def E_functor : (Sp.obj P).1.1.left ⥤ P.1.left where
@@ -202,15 +208,24 @@ def E_functor : (Sp.obj P).1.1.left ⥤ P.1.left where
 
   map_comp := E_functor_map_comp
   map_id := by sorry
+lemma E_functor_IsOverB :  E_functor ⋙ P.1.hom = (Sp.obj P).1.1.hom  := by sorry
 
 
-
-
-def E : Sp.obj P ⥤c P := ⟨ by
-
-  sorry , by sorry ⟩
-/-
-
+def E (P : fibration B) : Sp.obj P ⥤c P := ⟨
+  Over.homMk E_functor E_functor_IsOverB , by sorry ⟩
+theorem TriangleOnFibersCommutes {P : fibration  B} {I : B} :
+  fiberComparisonFunctor (psh.obj P) (Opposite.op I) ⋙
+  (toFunctorOnFibers (E P) I) =
+  E'_obj (P:=P) (I:=I) := by
+    apply Functor.ext ; swap ; intro X; simp ; apply Subtype.ext ; aesop ;
+    sorry
+theorem EisEquiv {P : fibration B} : IsEquivalence (E P).1.left := by
+  apply equivalenceOfFibrationsCheckOnFibers ;
+  intro I ;
+  let X :=  psh.obj P
+  apply IsEquivalence.cancelCompLeft (fiberComparisonFunctor X (Opposite.op I)) _
+  · exact fiberComparisonIsEquivalence
+  · rw [TriangleOnFibersCommutes] ; exact equivOnFibers
 
 /-
 def pseudoNatural {Q : PShCat B} :=
@@ -235,11 +250,3 @@ def GrothendieckIntroRule {Q : PShCat B} (η : {I : B} → Q.obj (Opposite.op I)
 
 
   -/
-
-/-
-def GrothendieckIntroRule {Q : PShCat B} (η : (I : B) → (P[I]) ⥤ Q.obj (Opposite.op I) ) : Grth Q ⟶ P.1 := by
-apply Over.homMk
-sorry
--/
-
--/

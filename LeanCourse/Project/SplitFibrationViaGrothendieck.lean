@@ -169,3 +169,29 @@ def Grothendieck : PShCat B ⥤ splitFibration B where
   map := by sorry
   map_comp := by sorry
   map_id := by sorry
+
+def fiberComparisonFunctor (P : PShCat B) (I : Bᵒᵖ ) : P.obj I ⥤ (Grothendieck_obj P) ↓ I.unop where --≌
+  obj := fun X ↦ ⟨ ⟨ I , Opposite.op X⟩  , rfl⟩
+  map := fun f ↦ ⟨ ⟨ 𝟙 _ , by simp ; exact Opposite.op f⟩  , by aesop ⟩
+  map_id := by sorry
+  map_comp := by sorry
+theorem fiberComparisonIsEquivalence {P : PShCat B} {I : Bᵒᵖ } : IsEquivalence (fiberComparisonFunctor P I) := by sorry
+
+  /-
+   toFun :=
+  invFun:= fun X ↦ (P.map (eqToHom (congrArg (fun x ↦ Opposite.op x) X.2))).obj X.1.unop.fiber.unop
+  left_inv := by intro X ; simp ; aesop
+  right_inv := by
+    intro X
+    apply Subtype.ext
+    simp
+    obtain ⟨ I , X⟩ := X.1
+
+    --aesop
+
+    /-
+    match _ , X with
+      base
+      -/
+      -- apply Grothendieck.ext
+  -/
