@@ -26,24 +26,8 @@ universe v₁ u₁ t₁ s₁  --v₂ u₁ u₂
 
 namespace FiberedCategories
 --attribute[ext] Functor
-@[simps] instance FiberToTotalSpace {B : Cat} {P : Over B} {I : B} : obj_over (P:=P.hom) I ⥤ P.left where
-  obj := fun X ↦ X.1
-  map := fun f ↦ f.1
-def extFunctor {C D : Cat} {F G : C ⥤ D}
-  (η : F ⟶ G)
- (isLevelwiseIdent : ∀ X : C , isIdentity (η.app X) ) : F = G :=
-  CategoryTheory.Functor.ext (fun X ↦ ((isLevelwiseIdent X).choose))
-  (fun {X} {Y} f ↦ by
-  let nat := η.naturality f
-  rw[← Category.assoc]
-  apply (CategoryTheory.Iso.eq_comp_inv (eqToIso _)).2
-  have this : ∀ X , η.app X = eqToHom _ := fun X ↦ (isLevelwiseIdent X).choose_spec
-  rw [← this X]
-  rw [← nat]
-  rw[ this Y]
-  rfl
-  exact ((isLevelwiseIdent Y).choose)
-  )
+
+
 
 
 variable {B : Cat.{v₁ , u₁}} {I J K : B}
@@ -142,7 +126,7 @@ def presheafOfCategories_map {F G : splitFibration B} (α : F ⥤cs G) :  F $ �
 
     -- let η : F$.map u ≫ ((α.1) / _ ) ≅ ((α.1)/ I.unop) ≫G$.map u := by sorry
 
-def PShCat (B : Cat.{v₁ , u₁} )  : Cat:= Bundled.of (B ᵒᵖ ⥤ Cat.{s₁ , t₁}) --{s₁ t₁} --.{max s₁ v₁ , max t₁ u₁}
+ --{s₁ t₁} --.{max s₁ v₁ , max t₁ u₁}
 /- def PSh : Cat ᵒᵖ ⥤ Cat where
   obj := fun B ↦ PShCat (unop B)
   map := sorry

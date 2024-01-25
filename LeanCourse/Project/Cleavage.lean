@@ -52,6 +52,10 @@ def map' {P : fibration B} {J I : B} {X Y : P[I]}  (u : J ⟶ I) (α : X ⟶ Y )
 
     -- exact uniq
 notation u " ⋆ " f => map' u f (Cart' u _) (Cart' u _)
+/-
+Remark: The reason why map' is so general (instead of just talking about the preferred cartesian lifts Cart') is that I thought I need
+the map for any choice of lift
+-/
 --notation (priority := high) u " ⋆ " f => map' u f
 
 lemma map_comp'  (u : J ⟶ I) {X Y Z : P[I]}
@@ -73,7 +77,10 @@ lemma map_id' {P : fibration B} [Cleavage P] (u : J ⟶ I) {X : P[I]} :
   𝟙 _ = (u ⋆ (𝟙 X)).choose := by
     apply ((u ⋆ (𝟙 X) ).choose_spec).2
     aesop_cat
-
+/-
+Remark: Note, that even we have already choosen a cleavage the following functor is still not computable, because lean has to choose
+(although it is unique) the morphism from map'.
+-/
 
 noncomputable def reindexing  {P : fibration B} [Cleavage P] (u : J ⟶ I) : P[I] ⥤ P[J] where
   obj := fun X ↦ u * X
@@ -86,17 +93,3 @@ def c {P : fibration B} [Cleavage P]  (u : J ⟶ I) (v : K ⟶ J) (X : P[I]) :
    (α.hom.1 ≫ Cart (v ≫ u) X) = Cart v (u * X) ≫ Cart u X  := by
   let Y : cartesianLiftOfAlong X (v ≫u ):=⟨ transLift (Cart' u X).1 (Cart' v (u * X)).1  , compPresCartesian _ _⟩
   exact cartesianLiftIsUnique (Cart' (v ≫ u) X) Y
-
-
-
-/-
-noncomputable def c {P : fibration B} [Cleavage P]  (u : J ⟶ I) (v : K ⟶ J) :
-  (reindexing u) ⋙ (reindexing v) ≅ reindexing (P:=P) (v ≫ u) := NatIso.ofComponents
-    (by
-    intro X
-
-
-    )
-    ( by sorry)
-
--/

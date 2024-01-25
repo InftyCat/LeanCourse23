@@ -9,7 +9,7 @@ import LeanCourse.Project.FiberedCategories
 import LeanCourse.Project.CartesianComposition
 import LeanCourse.Project.Cleavage
 import LeanCourse.Project.Split
-import LeanCourse.Project.PreSheavesOfCategories
+--import LeanCourse.Project.PreSheavesOfCategories
 import LeanCourse.Project.DiscreteFibration
 
 
@@ -30,15 +30,15 @@ universe v₁ u₁ v₂ u₂   --v₂ u₁ u₂
 
 namespace FiberedCategories
 -- notation (priority := high) P "[" A "]" => obj_over (P:=P.1.hom) A
-variable {B : Cat.{v₁ , u₁}} {I J K : B}
+variable {B : Cat.{v₁ , v₁}} {I J K : B}
 -- def tot' (P : PShCat B) : Type _ := ()
 @[simps] def opFunctor : Cat.{v₁,u₁} ⥤ Cat.{v₁,u₁} where
   obj := fun X ↦ Bundled.of (X ᵒᵖ)
   map := fun F ↦ Functor.op F
 
 
-def tot (P : PShCat.{v₁ , u₁ , s₁ , t₁ } B) : Cat.{max v₁ t₁,max u₁ s₁ } := Bundled.of (CategoryTheory.Grothendieck (P ⋙ opFunctor)) -- , Grothendieck.instCategoryGrothendieck⟩
-def totop (P : PShCat.{v₁ , u₁ , s₁ , t₁ } B) : Cat.{_,_} := Bundled.of ((tot P)ᵒᵖ)
+def tot (P : PShCat.{v₁ , v₁ , v₁ , v₁ } B) : Cat.{v₁,v₁} := Bundled.of (CategoryTheory.Grothendieck (P ⋙ opFunctor)) -- , Grothendieck.instCategoryGrothendieck⟩
+def totop (P : PShCat.{v₁ , v₁ , v₁ , v₁ }  B) : Cat.{_,_} := Bundled.of ((tot P)ᵒᵖ)
 --Bundled.of (tot' P) Grothendieck.instCategoryGrothendieck
 -- def coercCat (B : Cat.{v₁ , u₁ }) : Cat.{max v₁ v₂ , max u₁ u₂} := by sorry
 -- def coercType (B : Type u₁ ) : Type (max u₁ v₁) := B

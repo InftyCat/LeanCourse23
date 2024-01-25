@@ -9,7 +9,7 @@ import Mathlib.CategoryTheory.EqToHom
 import LeanCourse.Project.FiberedCategories
 import LeanCourse.Project.Cleavage
 import LeanCourse.Project.Split
-import LeanCourse.Project.PreSheavesOfCategories
+--import LeanCourse.Project.PreSheavesOfCategories
 import LeanCourse.Project.DiscreteFibration
 import LeanCourse.Project.SplitFibrationViaGrothendieck
 import LeanCourse.Project.FibrationBicategory

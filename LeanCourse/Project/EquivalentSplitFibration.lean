@@ -10,7 +10,7 @@ import Mathlib.CategoryTheory.Equivalence
 import LeanCourse.Project.FiberedCategories
 import LeanCourse.Project.Cleavage
 import LeanCourse.Project.Split
-import LeanCourse.Project.PreSheavesOfCategories
+--import LeanCourse.Project.PreSheavesOfCategories
 import LeanCourse.Project.DiscreteFibration
 import LeanCourse.Project.SplitFibrationViaGrothendieck
 import LeanCourse.Project.FibrationBicategory
@@ -41,7 +41,7 @@ variable {P : fibration B}
 lemma SpP {I : B} : (Sp.obj P) ↓ I ≅ Bundled.of (fundamentalFibration.obj I ⟶ P) := by sorry
 -/
 open Over
-lemma weird {I J : Bᵒᵖ} {u : I ⟶ J} : (Over.map u.unop).obj (Over.mk (𝟙 J.unop)) = Over.mk u.unop := by
+lemma someOverExt {I J : Bᵒᵖ} {u : I ⟶ J} : (Over.map u.unop).obj (Over.mk (𝟙 J.unop)) = Over.mk u.unop := by
   trans Over.mk (𝟙 J.unop ≫ u.unop)
   · rfl
   · apply congrArg _ ; apply Category.id_comp
@@ -51,7 +51,7 @@ lemma replaceTargetOfFiberMap {X Y : (Sp.obj P).1.1.left} (f : Y ⟶ X) :
       obtain ⟨⟨ I⟩  , ⟨ X ⟩ ⟩:= X
       obtain ⟨⟨ J ⟩  , ⟨ Y ⟩ ⟩ := Y
       obtain ⟨⟨ u ⟩  , ⟨ α ⟩  ⟩ :=f
-      simp ; apply congrArg (X.1.left.obj) ; exact weird
+      simp ; apply congrArg (X.1.left.obj) ; exact someOverExt
 def fiberMap {X Y : (Sp.obj P).1.1.left} (f : Y ⟶ X) :
   Y.unop.2.unop.1.left.obj (Over.mk (𝟙 _)) ⟶ X.unop.2.unop.1.left.obj (Over.mk f.unop.1.unop)
   := by
@@ -67,31 +67,16 @@ def fiberMap {X Y : (Sp.obj P).1.1.left} (f : Y ⟶ X) :
 
 @[simp] def E_functor_map {X Y : (Sp.obj P).1.1.left} (f : Y ⟶ X) : ((E'_obj).obj Y.unop.fiber.unop).1 ⟶((E'_obj).obj X.unop.fiber.unop).1  :=
   fiberMap f ≫ X.unop.2.unop.1.left.map (Over.homMk f.unop.1.unop)
-  /-
-  by
-    obtain ⟨⟨ I⟩  , ⟨ X ⟩ ⟩:= X
-    obtain ⟨⟨ J ⟩  , ⟨ Y ⟩ ⟩ := Y
 
-    obtain ⟨⟨ u ⟩  , ⟨ α ⟩  ⟩ :=f
-
-    simp
-    let fst := fiberMap f
-    %let snd : X.1.left.obj (Over.mk u) ⟶ X.1.left.obj (Over.mk (𝟙 I)):= X.1.left.map (Over.homMk u)
-    exact (fst ≫ snd)
-    -- (↑((((PSh_rest fundamentalFibration).obj (yo.obj P)).map u).obj X)).left.obj (Over.mk (𝟙 J.unop ))
-    -- apply (· ≫ fst )
-    -/
 
 lemma exchangeLaw {C : Cat} {X Y Z W  V : C} {f : X ⟶ Y} {g : Y ⟶Z } {h : Z ⟶ V} {i : V ⟶ W} :
   f ≫ (g ≫ h) ≫ i = (f ≫ g)  ≫ (h ≫ i) := by
   rw [Category.assoc , Category.assoc]
 
 lemma compCartTransExt {P Q : fibration B} {F G H:  P ⟶ Q} (η: F ⟶ G) (ε : G ⟶ H) : (η ≫ ε).1 = η.1 ≫ ε.1 := rfl
-def forgetFibration {P Q : fibration B} : (⟨ P ⟶ Q , instCategoryHomFibrationToQuiverToCategoryStructInstCategoryFibration ⟩ : Cat)  ⥤ (P.1.left ⥤ Q.1.left)  where
-  obj := fun F ↦ F.1.left
-  map := fun f ↦ f.1
-lemma E_functor_map_comp  {X' Y' Z' : (Sp.obj P).1.1.left} (g : Z' ⟶Y') (f : Y' ⟶ X') : E_functor_map (g ≫ f) = E_functor_map g ≫ E_functor_map f := by sorry
-/-
+
+lemma E_functor_map_comp  {X' Y' Z' : (Sp.obj P).1.1.left} (g : Z' ⟶Y') (f : Y' ⟶ X') : E_functor_map (g ≫ f) = E_functor_map g ≫ E_functor_map f := by
+
     let X:= X'.unop.2.unop
     let Y:= Y'.unop.2.unop
     let Z := Z'.unop.2.unop
@@ -104,14 +89,14 @@ lemma E_functor_map_comp  {X' Y' Z' : (Sp.obj P).1.1.left} (g : Z' ⟶Y') (f : Y
     let u := f.unop.1.unop
     let v' : mk (v ≫ u) ⟶ mk u := homMk v
     let v'' :  mk v ⟶ mk (𝟙 _ ) := homMk v
-    have hv' : v' = (Over.map u).map v'' ≫ eqToHom (weird) := by
+    have hv' : v' = (Over.map u).map v'' ≫ eqToHom (someOverExt) := by
       apply OverMorphism.ext
       simp
       let m := g.unop.base.unop
       symm
       calc
-        m ≫ (eqToHom weird).left
-          = m ≫ (Over.forget _).map (eqToHom weird) := rfl
+        m ≫ (eqToHom someOverExt).left
+          = m ≫ (Over.forget _).map (eqToHom someOverExt) := rfl
         _ = m ≫ eqToHom rfl := by rw [eqToHom_map] ;
         _ = m  ≫ 𝟙 _ := by rw [eqToHom_refl]
         _ = m := by apply Category.comp_id
@@ -135,7 +120,7 @@ lemma E_functor_map_comp  {X' Y' Z' : (Sp.obj P).1.1.left} (g : Z' ⟶Y') (f : Y
     let ab : Z.1.left ⟶ ((restFunctor.map ⟨ v ≫ u ⟩ ).obj X).1.left := h.unop.2.unop.1
 
     let compPath := congrArg (fun F ↦ (F.obj X).1.left ) (symm ( restFunctor.map_comp ⟨u⟩ ⟨v⟩))
-    -- have test : congrArg (fun x ↦ x.1) compInFiberCrypticPath = compPath := rfl
+
 
     let vf : ((restFunctor.map ⟨ v ⟩ ).obj Y).1.left ⟶
       (((restFunctor.map ⟨ v ≫ u ⟩ ).obj X)).1.left :=
@@ -199,8 +184,6 @@ lemma E_functor_map_comp  {X' Y' Z' : (Sp.obj P).1.1.left} (g : Z' ⟶Y') (f : Y
 
 
 
--/
-
 
 def E_functor : (Sp.obj P).1.1.left ⥤ P.1.left where
   obj := fun X ↦ ((E'_obj).obj X.unop.fiber.unop).1
@@ -226,27 +209,3 @@ theorem EisEquiv {P : fibration B} : IsEquivalence (E P).1.left := by
   apply IsEquivalence.cancelCompLeft (fiberComparisonFunctor X (Opposite.op I)) _
   · exact fiberComparisonIsEquivalence
   · rw [TriangleOnFibersCommutes] ; exact equivOnFibers
-
-/-
-def pseudoNatural {Q : PShCat B} :=
-  { η : {I : B} → Q.obj (Opposite.op I) ⥤ P[I]  //
-  ∀ {J I} (u : J ⟶ I) , η ⋙ reindexing u = Q.map u.op ⋙ η  }
-variable {P : fibration B} {Q : PShCat B}
-def GrothendieckIntroRule_map {Q : PShCat B} (η : {I : B} → Q.obj (Opposite.op I) ⥤ P[I] )
-  {I J : B} {X : Q.obj (Opposite.op I)} {Y : Q.obj (Opposite.op J)}
-  (u : J ⟶ I) {α : Y ⟶ (Q.map u.op).obj X} :  (η.obj Y).1 ⟶  (η.obj X).1 := by
-    apply ((η.map α).1 ≫ · )
--/
-  /-
-def GrothendieckIntroRule {Q : PShCat B} (η : {I : B} → Q.obj (Opposite.op I) ⥤ P[I] ) : (Grth Q).left ⥤ P.1.left where
-  obj := fun X ↦ (η.obj X.unop.fiber).1
-  map := fun {X} {Y} f ↦ by
-    obtain ⟨I , X⟩:= X
-    obtain ⟨J , Y⟩ := Y
-    obtain ⟨u , α ⟩ :=f
-
-    exact ((η.map α).1 ≫ sorry)
-    -- apply (η.map α ≫ · )
-
-
-  -/

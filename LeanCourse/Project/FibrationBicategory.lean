@@ -33,3 +33,18 @@ instance : Bicategory (fibration B) where
   whisker_exchange := by sorry
   pentagon  := by sorry
   triangle := by sorry
+class IsEquivalenceOfFibrations {P Q : fibration B} (F : P ⟶ Q) where mk' ::
+  /-- The inverse functor to `F` -/
+  inverse : Q ⟶ P
+  /-- Composition `F ⋙ inverse` is isomorphic to the identity. -/
+  unitIso : 𝟙 P ≅ F ≫ inverse
+  /-- Composition `inverse ⋙ F` is isomorphic to the identity. -/
+  counitIso : inverse ≫  F ≅ 𝟙 Q
+  /-
+  /-- The natural isomorphisms are inverse. -/
+  functor_unitIso_comp :
+    ∀ X : C,
+      F.map ((unitIso.hom : 𝟭 C ⟶ F ⋙ inverse).app X) ≫ counitIso.hom.app (F.obj X) =
+        𝟙 (F.obj X) := by
+    aesop_cat
+-/
