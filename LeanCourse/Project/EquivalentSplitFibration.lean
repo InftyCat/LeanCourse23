@@ -246,11 +246,45 @@ def E (P : fibration B) : Sp.obj P ⥤c P := by
 lemma eq_whisker_eq {C : Cat} {X Y Z : C} {f f' : X ⟶ Y} {g g' : Y ⟶ Z} (p : f = f') ( q : g = g') : f ≫ g = f' ≫ g' := by
   rw [p]
   rw [q]
-def TriangleOnFibersCommutesObj {P : fibration  B} {I : B}  (X : ((psh.obj P).obj (Opposite.op I)).1) :  (fiberComparisonFunctor (psh.obj P) (Opposite.op I) ⋙
+variable {P : fibration  B} {I : B} {X Y : ((psh.obj P).obj (Opposite.op I)).1}
+def TriangleOnFibersCommutesObj (X : ((psh.obj P).obj (Opposite.op I)).1) :  (fiberComparisonFunctor (psh.obj P) (Opposite.op I) ⋙
   toFunctorOnFibers (E P) I).obj X =  E'_obj.obj X := by
     simp ; apply Subtype.ext ; aesop ;
+def fcF := fiberComparisonFunctor (psh.obj P) (Opposite.op I)
+def myFiberMapFiberUnop  (f : X ⟶ Y) : ((fcF.obj X).1).unop.fiber.unop ⟶  (((psh.obj P ⋙ opFunctor).map (𝟙 (Opposite.op I))).obj ((fcF.obj Y).1).unop.fiber).unop := fiberComparisonFunctor_map_fib f
+def myFiberMapFiber  (f : X ⟶ Y) : ((psh.obj P ⋙ opFunctor).map (𝟙 (Opposite.op I))).obj ((fcF.obj Y).1).unop.fiber ⟶ ((fcF.obj X).1).unop.fiber := Opposite.op <| myFiberMapFiberUnop f
+def myFiberMap (f : X ⟶ Y) : (fcF.obj X) ⟶ (fcF.obj Y) :=  ⟨ ⟨ 𝟙 (Opposite.op I) , myFiberMapFiber f⟩ , by aesop⟩
+lemma helpPath : (((psh.obj P ⋙ opFunctor).map (𝟙 (Opposite.op I))).obj ((fcF.obj Y).1).unop.fiber).unop = Y :=  by rw [Functor.map_id] ;rfl
+lemma helpLemma3 (f : X ⟶ Y): myFiberMapFiberUnop f ≫ eqToHom (helpPath) = f := by
+        calc
+        _ = (f ≫ eqToHom (_)) ≫ eqToHom (helpPath) := by apply (· =≫_) ; rfl
+        _ = f ≫ eqToHom (_) := by rw [Category.assoc, eqToHom_trans]
+        _ = f ≫ 𝟙 _  := by apply (_≫=·) ; rw [eqToHom_refl]
+        _ = _ := by rw [Category.comp_id]
 
-theorem TriangleOnFibersCommutes {P : fibration  B} {I : B} :
+        --· sorry
+lemma firstPartOfProof (f : X ⟶ Y) : ((myFiberMap f).1.unop.fiber.unop.1.app (Over.mk (𝟙 _)) ≫ replaceTargetOfFiberMap' ((myFiberMap f).1)) ≫ Y.1.left.map (Over.homMk (𝟙 _))
+        = eqToHom (congrArg FiberToTotalSpace.obj (TriangleOnFibersCommutesObj X)) ≫  rewrittenTrafo f.1 ⟨ Over.mk (𝟙 I ) , rfl ⟩ ≫ eqToHom (congrArg FiberToTotalSpace.obj (symm (TriangleOnFibersCommutesObj Y)))  := by
+        have helpLemma3' : ∀ u , (myFiberMapFiberUnop f).1.app u ≫ eqToHom (_) = f.1.app u := fun u ↦ by symm ;  calc
+          f.1.app u =  ((myFiberMapFiberUnop f) ≫ eqToHom helpPath).1.app u := by rw [helpLemma3 f]
+          _ = (forgetFibration.map ((myFiberMapFiberUnop f) ≫ eqToHom helpPath)).app u := by rfl
+          _ = (forgetFibration.map ((myFiberMapFiberUnop f)) ≫ forgetFibration.map (eqToHom helpPath)).app u := by rw [Functor.map_comp]
+          _ = (forgetFibration.map ((myFiberMapFiberUnop f))).app u ≫ (forgetFibration.map (eqToHom helpPath)).app u := by rfl
+          _ = (myFiberMapFiberUnop f).1.app u ≫ eqToHom (_) := by apply (_≫=· ) ; rw [eqToHom_map forgetFibration] ; apply eqToHom_app
+        have obs: eqToHom (congrArg FiberToTotalSpace.obj (TriangleOnFibersCommutesObj X)) = 𝟙 _ := by apply eqToHom_refl
+        have test : rewrittenTrafo f.1 ⟨ Over.mk (𝟙 I ) , rfl ⟩ = f.1.app (Over.mk (𝟙 _)) := by aesop
+        have test2 : (myFiberMap f).1.unop.fiber.unop.1.app (Over.mk (𝟙 _)) = (myFiberMapFiber f).unop.1.app (Over.mk (𝟙 _))  := by rfl
+        calc
+        _ = ((myFiberMapFiber f).unop.1.app (Over.mk (𝟙 _)) ≫ eqToHom ( replaceTargetOfFiberMap ((myFiberMap f).1))) ≫ Y.1.left.map (𝟙 _) := eq_whisker_eq (test2 =≫ _) (congrArg Y.1.left.map (by rfl))
+        _ = ((myFiberMapFiber f).unop.1.app (Over.mk (𝟙 _)) ≫ eqToHom ( replaceTargetOfFiberMap ((myFiberMap f).1))) ≫ (𝟙 _) := by apply (_≫=· ) ; apply Functor.map_id
+        _ = (myFiberMapFiber f).unop.1.app (Over.mk (𝟙 _)) ≫ eqToHom ( replaceTargetOfFiberMap ((myFiberMap f).1)) := by apply Category.comp_id
+        _ = (myFiberMapFiberUnop f).1.app (Over.mk (𝟙 _)) ≫ eqToHom ( replaceTargetOfFiberMap ((myFiberMap f).1)) := by apply (· =≫_) ; rfl
+        _ = ((myFiberMapFiberUnop f).1.app (Over.mk (𝟙 _)) ≫ eqToHom (_) )≫ eqToHom (congrArg FiberToTotalSpace.obj (symm (TriangleOnFibersCommutesObj Y))) := by symm ; rw [Category.assoc] ; apply (_≫=·) ; rw [eqToHom_trans] ; rw [Functor.map_id] ; aesop_cat
+        _ = f.1.app (Over.mk (𝟙 _)) ≫ eqToHom (congrArg FiberToTotalSpace.obj (symm (TriangleOnFibersCommutesObj Y))) := by apply (· =≫_) ; exact helpLemma3' (Over.mk (𝟙 _))
+        _ = eqToHom (congrArg FiberToTotalSpace.obj (TriangleOnFibersCommutesObj X)) ≫ f.1.app (Over.mk (𝟙 _)) ≫ eqToHom (congrArg FiberToTotalSpace.obj (symm (TriangleOnFibersCommutesObj Y))) := by symm ; rw [obs , Category.id_comp ]
+        _= _ := by apply (_≫=· ) ; apply (·=≫_) ; exact (test.symm)
+
+theorem TriangleOnFibersCommutes  :
   fiberComparisonFunctor (psh.obj P) (Opposite.op I) ⋙
   toFunctorOnFibers (E P) I =
   E'_obj (P:=P) (I:=I) := by
@@ -258,69 +292,19 @@ theorem TriangleOnFibersCommutes {P : fibration  B} {I : B} :
     apply Functor.ext   ; swap
     · intro X; exact TriangleOnFibersCommutesObj X
     · intro X Y f ; apply Subtype.ext ;
-      --let X : fundamentalFibration.obj I ⟶ P := by unfold psh at X ; exact X
-      --let Y : fundamentalFibration.obj I ⟶ P := by unfold psh at Y ; exact X
-
-      --let u : I ⟶ I := f.unop.base.unop
-      --obtain ⟨ X , cX  ⟩ := X.1
-      --obtain ⟨ Y , cY  ⟩ := Y.1
-      -- obtain ⟨ ⟨ u ⟩ , ⟨ f ⟩ ⟩ := f.1
-      --let imgF : (E'_obj_obj Y).1 ⟶ (E'_obj_obj X).1 := E_functor_map f
-      --have this : ((E P / I).map f).1 =() := by rfl
-     -- let idFromf :=
-      let fcF := fiberComparisonFunctor (psh.obj P) (Opposite.op I)
       have goal : (fcF.map f).1 = ⟨ 𝟙 (Opposite.op I) , Opposite.op (fiberComparisonFunctor_map_fib f)⟩ := by apply fiberComparisonFunctor_map_coe
-      let myFiberMapFiberUnop :  ((fcF.obj X).1).unop.fiber.unop ⟶  (((psh.obj P ⋙ opFunctor).map (𝟙 (Opposite.op I))).obj ((fcF.obj Y).1).unop.fiber).unop := fiberComparisonFunctor_map_fib f
-      let myFiberMapFiber : ((psh.obj P ⋙ opFunctor).map (𝟙 (Opposite.op I))).obj ((fcF.obj Y).1).unop.fiber ⟶ ((fcF.obj X).1).unop.fiber := Opposite.op myFiberMapFiberUnop
-      let myFiberMap : (fcF.obj X) ⟶ (fcF.obj Y) :=  ⟨ ⟨ 𝟙 (Opposite.op I) , myFiberMapFiber⟩ , by sorry⟩ --aesop
-      have test : rewrittenTrafo f.1 ⟨ Over.mk (𝟙 I ) , rfl ⟩ = f.1.app (Over.mk (𝟙 _)) := by aesop
-      have test2 : myFiberMap.1.unop.fiber.unop.1.app (Over.mk (𝟙 _)) = myFiberMapFiber.unop.1.app (Over.mk (𝟙 _))  := by rfl
-      have path : (((psh.obj P ⋙ opFunctor).map (𝟙 (Opposite.op I))).obj ((fcF.obj Y).1).unop.fiber).unop = Y :=  by rw [Functor.map_id] ;rfl
-      have test3 : myFiberMapFiberUnop ≫ eqToHom (path) = f := by
-        calc
-        _ = (eqToHom (_) ≫ f ≫ eqToHom (_)) ≫ eqToHom (path) := by apply (· =≫_) ; rfl
-        _ = f ≫ eqToHom (_) := by rw [eqToHom_refl, Category.id_comp , Category.assoc, eqToHom_trans]; rfl
-        _ = f ≫ 𝟙 _  := by apply (_≫=·) ; rw [eqToHom_refl]
-        _ = _ := by rw [Category.comp_id]
-
-      have test3' : ∀ u , myFiberMapFiberUnop.1.app u ≫ eqToHom (_) = f.1.app u := fun u ↦ by symm ; rw [← test3] ; calc
-          (myFiberMapFiberUnop ≫ eqToHom path).1.app u = (forgetFibration.map (myFiberMapFiberUnop ≫ eqToHom path)).app u := by rfl
-          _ = (forgetFibration.map (myFiberMapFiberUnop) ≫ forgetFibration.map (eqToHom path)).app u := by rw [Functor.map_comp]
-          _ = (forgetFibration.map (myFiberMapFiberUnop)).app u ≫ (forgetFibration.map (eqToHom path)).app u := by rfl
-          _ = myFiberMapFiberUnop.1.app u ≫ eqToHom (_) := by apply (_≫=· ) ; rw [eqToHom_map forgetFibration] ; apply eqToHom_app
-        --· sorry
-      have obs: eqToHom (congrArg FiberToTotalSpace.obj (TriangleOnFibersCommutesObj X)) = 𝟙 _ := by apply eqToHom_refl
-
-
-      have remainingGoal: (myFiberMap.1.unop.fiber.unop.1.app (Over.mk (𝟙 _)) ≫ replaceTargetOfFiberMap' (myFiberMap.1)) ≫ Y.1.left.map (Over.homMk (𝟙 _))
-        = eqToHom (congrArg FiberToTotalSpace.obj (TriangleOnFibersCommutesObj X)) ≫  rewrittenTrafo f.1 ⟨ Over.mk (𝟙 I ) , rfl ⟩ ≫ eqToHom (congrArg FiberToTotalSpace.obj (symm (TriangleOnFibersCommutesObj Y)))  := by calc
-        _ = (myFiberMapFiber.unop.1.app (Over.mk (𝟙 _)) ≫ eqToHom ( replaceTargetOfFiberMap (myFiberMap.1))) ≫ Y.1.left.map (𝟙 _) := eq_whisker_eq (test2 =≫ _) (congrArg Y.1.left.map (by rfl))
-        _ = (myFiberMapFiber.unop.1.app (Over.mk (𝟙 _)) ≫ eqToHom ( replaceTargetOfFiberMap (myFiberMap.1))) ≫ (𝟙 _) := by apply (_≫=· ) ; apply Functor.map_id
-        _ = myFiberMapFiber.unop.1.app (Over.mk (𝟙 _)) ≫ eqToHom ( replaceTargetOfFiberMap (myFiberMap.1)) := by apply Category.comp_id
-        _ = myFiberMapFiberUnop.1.app (Over.mk (𝟙 _)) ≫ eqToHom ( replaceTargetOfFiberMap (myFiberMap.1)) := by apply (· =≫_) ; rfl
-        _ = (myFiberMapFiberUnop.1.app (Over.mk (𝟙 _)) ≫ eqToHom (_) )≫ eqToHom (congrArg FiberToTotalSpace.obj (symm (TriangleOnFibersCommutesObj Y))) := by symm ; rw [Category.assoc , eqToHom_trans] ; rfl
-        _ = f.1.app (Over.mk (𝟙 _)) ≫ eqToHom (congrArg FiberToTotalSpace.obj (symm (TriangleOnFibersCommutesObj Y))) := by apply (· =≫_) ; exact test3' (Over.mk (𝟙 _))
-        _ = eqToHom (congrArg FiberToTotalSpace.obj (TriangleOnFibersCommutesObj X)) ≫ f.1.app (Over.mk (𝟙 _)) ≫ eqToHom (congrArg FiberToTotalSpace.obj (symm (TriangleOnFibersCommutesObj Y))) := by symm ; rw [Category.id_comp ]
-        _= _ := by apply (_≫=· ) ; apply (·=≫_) ; exact (test.symm)
-
-
       calc
       ((fcF ⋙ (E P / I)).map f).1
         = ((E P / I).map (fcF.map f)).1  := by rw [Functor.comp_map]
       _ = ((E P / I).map (fcF.map f)).1   := by rfl
        _ = (E P).1.left.map (fcF.map f).1 := by rfl
        _ = E_functor_map (fcF.map f).1 := by rfl
-       _ = E_functor_map myFiberMap.1 := by apply congrArg E_functor_map ; exact (goal.symm)
-       _ = fiberMap (myFiberMap.1) ≫ Y.1.left.map (Over.homMk (𝟙 _)) := by unfold E_functor_map ; rfl --; apply (_ ≫= ·) ; rw [Functor.map_id] , 𝟙
-       _ = (myFiberMap.1.unop.fiber.unop.1.app (Over.mk (𝟙 _)) ≫ replaceTargetOfFiberMap' (myFiberMap.1)) ≫ Y.1.left.map (Over.homMk (𝟙 _)) := by rfl
-       _ = eqToHom (congrArg FiberToTotalSpace.obj (TriangleOnFibersCommutesObj X)) ≫  rewrittenTrafo f.1 ⟨ Over.mk (𝟙 I ) , rfl ⟩ ≫ eqToHom (congrArg FiberToTotalSpace.obj (symm (TriangleOnFibersCommutesObj Y)))  := remainingGoal
+       _ = E_functor_map (myFiberMap f).1 := by apply congrArg E_functor_map ; exact (goal.symm)
+       _ = fiberMap ((myFiberMap f).1) ≫ Y.1.left.map (Over.homMk (𝟙 _)) := by unfold E_functor_map ; rfl --; apply (_ ≫= ·) ; rw [Functor.map_id] , 𝟙
+       _ = ((myFiberMap f).1.unop.fiber.unop.1.app (Over.mk (𝟙 _)) ≫ replaceTargetOfFiberMap' ((myFiberMap f).1)) ≫ Y.1.left.map (Over.homMk (𝟙 _)) := by rfl
+       _ = eqToHom (congrArg FiberToTotalSpace.obj (TriangleOnFibersCommutesObj X)) ≫  rewrittenTrafo f.1 ⟨ Over.mk (𝟙 I ) , rfl ⟩ ≫ eqToHom (congrArg FiberToTotalSpace.obj (symm (TriangleOnFibersCommutesObj Y)))  := firstPartOfProof f
       _ = FiberToTotalSpace.map (eqToHom (TriangleOnFibersCommutesObj X)) ≫  FiberToTotalSpace.map (E'_obj.map f) ≫ FiberToTotalSpace.map (eqToHom (symm (TriangleOnFibersCommutesObj Y)))  := by rw [← eqToHom_map FiberToTotalSpace] ; apply (_≫=· ) ; apply (eq_whisker_eq) ; rfl ; symm ; apply eqToHom_map FiberToTotalSpace
       _ = FiberToTotalSpace.map (eqToHom (TriangleOnFibersCommutesObj X) ≫  E'_obj.map f ≫ eqToHom (symm (TriangleOnFibersCommutesObj Y))) := by symm ; rw [Functor.map_comp , Functor.map_comp]
-
-
-
-
-      -- sorry -- : E'_obj.obj Y = (fiberComparisonFunctor (psh.obj P) (Opposite.op I) ⋙ (E P / I)).obj Y)
 
 theorem EisEquiv {P : fibration B} : isEquivalenceInBicategory (E P) := by
   apply equivalenceOfFibrationsCheckOnFibers ;
