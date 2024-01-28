@@ -33,7 +33,7 @@ instance : Bicategory (fibration B) where
   whisker_exchange := by sorry
   pentagon  := by sorry
   triangle := by sorry
-class IsEquivalenceOfFibrations {P Q : fibration B} (F : P ⟶ Q) where mk' ::
+class isEquivalenceInBicategory {C : Type u₁ } [Bicategory C] {P Q  : C}  (F : P ⟶ Q) where
   /-- The inverse functor to `F` -/
   inverse : Q ⟶ P
   /-- Composition `F ⋙ inverse` is isomorphic to the identity. -/

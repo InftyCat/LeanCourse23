@@ -8,10 +8,10 @@ import Mathlib.CategoryTheory.EqToHom
 import Mathlib.CategoryTheory.Equivalence
 
 import LeanCourse.Project.FiberedCategories
-import LeanCourse.Project.Cleavage
-import LeanCourse.Project.Split
+-- import LeanCourse.Project.Cleavage
+-- import LeanCourse.Project.Split
 --import LeanCourse.Project.PreSheavesOfCategories
-import LeanCourse.Project.DiscreteFibration
+-- import LeanCourse.Project.DiscreteFibration
 import LeanCourse.Project.SplitFibrationViaGrothendieck
 import LeanCourse.Project.FibrationBicategory
 import LeanCourse.Project.CounitOnFibers
@@ -25,7 +25,7 @@ set_option autoImplicit true
 namespace CategoryTheory
 
 --open Opposite
-set_option maxHeartbeats 1500000
+set_option maxHeartbeats 2000000
 set_option quotPrecheck false
 
 universe v₁ u₁ --v₂ u₁ u₂
@@ -45,25 +45,21 @@ lemma someOverExt {I J : Bᵒᵖ} {u : I ⟶ J} : (Over.map u.unop).obj (Over.mk
   trans Over.mk (𝟙 J.unop ≫ u.unop)
   · rfl
   · apply congrArg _ ; apply Category.id_comp
-lemma replaceTargetOfFiberMap {X Y : (Sp.obj P).1.1.left} (f : Y ⟶ X) :
+def replaceTargetOfFiberMap {X Y : (Sp.obj P).1.1.left} (f : Y ⟶ X) :
   ((((yoObj P).map (fundamentalFibration.map (f.unop.1.unop)).op).obj X.unop.fiber.unop).1).left.obj (Over.mk (𝟙 Y.unop.1.unop)) =
       X.unop.2.unop.1.left.obj (Over.mk f.unop.1.unop) := by
       obtain ⟨⟨ I⟩  , ⟨ X ⟩ ⟩:= X
       obtain ⟨⟨ J ⟩  , ⟨ Y ⟩ ⟩ := Y
       obtain ⟨⟨ u ⟩  , ⟨ α ⟩  ⟩ :=f
       simp ; apply congrArg (X.1.left.obj) ; exact someOverExt
-def fiberMap {X Y : (Sp.obj P).1.1.left} (f : Y ⟶ X) :
-  Y.unop.2.unop.1.left.obj (Over.mk (𝟙 _)) ⟶ X.unop.2.unop.1.left.obj (Over.mk f.unop.1.unop)
-  := by
-    obtain ⟨⟨ I⟩  , ⟨ X ⟩ ⟩:= X
-    obtain ⟨⟨ J ⟩  , ⟨ Y ⟩ ⟩ := Y
-    have this := replaceTargetOfFiberMap f
-    obtain ⟨⟨ u ⟩  , ⟨ α ⟩  ⟩ :=f
-    let fst : Y.1.left.obj (Over.mk (𝟙 J ) ) ⟶ _  :=
-      (α.1.app (Over.mk (𝟙 J)))
+def replaceTargetOfFiberMap' {X Y : (Sp.obj P).1.1.left} (f : Y ⟶ X) :
+  ((((yoObj P).map (fundamentalFibration.map (f.unop.1.unop)).op).obj X.unop.fiber.unop).1).left.obj (Over.mk (𝟙 Y.unop.1.unop)) ⟶
+      X.unop.2.unop.1.left.obj (Over.mk f.unop.1.unop) :=  eqToHom (replaceTargetOfFiberMap f)
 
-    let fst := fst ≫ eqToHom (this)
-    exact fst
+@[simp] def fiberMap {X Y : (Sp.obj P).1.1.left} (f : Y ⟶ X) :
+  Y.unop.2.unop.1.left.obj (Over.mk (𝟙 _)) ⟶ X.unop.2.unop.1.left.obj (Over.mk f.unop.1.unop)
+  := f.unop.fiber.unop.1.app (Over.mk (𝟙 _)) ≫ replaceTargetOfFiberMap' f
+
 
 @[simp] def E_functor_map {X Y : (Sp.obj P).1.1.left} (f : Y ⟶ X) : ((E'_obj).obj Y.unop.fiber.unop).1 ⟶((E'_obj).obj X.unop.fiber.unop).1  :=
   fiberMap f ≫ X.unop.2.unop.1.left.map (Over.homMk f.unop.1.unop)
@@ -74,7 +70,7 @@ lemma exchangeLaw {C : Cat} {X Y Z W  V : C} {f : X ⟶ Y} {g : Y ⟶Z } {h : Z 
   rw [Category.assoc , Category.assoc]
 
 lemma compCartTransExt {P Q : fibration B} {F G H:  P ⟶ Q} (η: F ⟶ G) (ε : G ⟶ H) : (η ≫ ε).1 = η.1 ≫ ε.1 := rfl
-
+/-
 lemma E_functor_map_comp  {X' Y' Z' : (Sp.obj P).1.1.left} (g : Z' ⟶Y') (f : Y' ⟶ X') : E_functor_map (g ≫ f) = E_functor_map g ≫ E_functor_map f := by
 
     let X:= X'.unop.2.unop
@@ -183,26 +179,150 @@ lemma E_functor_map_comp  {X' Y' Z' : (Sp.obj P).1.1.left} (g : Z' ⟶Y') (f : Y
     simp
 
 
-
+-/
 
 def E_functor : (Sp.obj P).1.1.left ⥤ P.1.left where
   obj := fun X ↦ ((E'_obj).obj X.unop.fiber.unop).1
   map :=  E_functor_map
 
-  map_comp := E_functor_map_comp
+  map_comp := by sorry --E_functor_map_comp
   map_id := by sorry
 lemma E_functor_IsOverB :  E_functor ⋙ P.1.hom = (Sp.obj P).1.1.hom  := by sorry
+@[simp] def toFiberIso {P : fibration B} {X Y : P[I]} (f : X.1 ≅ Y.1) (isVert : isVertical f.hom) : X ≅ Y where
+  hom := (⟨ f.hom , isVert⟩)
+  inv := (by sorry)
+  hom_inv_id := ( by sorry )
+  inv_hom_id := ( by sorry)
+lemma anyPathIsAutomaticallyVertical {P : fibration B} {I : B} {X : P[I]} {Y : P.1.left} (p : X.1 = Y)  :
+  isVertical (eqToHom p : X.1 ⟶ (⟨ Y , (congrArg (P.1.hom.obj) (symm p)).trans X.2⟩ : obj_over I).1) := by aesop_cat
+def E (P : fibration B) : Sp.obj P ⥤c P := by
+  use Over.homMk E_functor E_functor_IsOverB
+  intro Y' X' φ hφ
+  let ⟨ ⟨ I ⟩ , ⟨ X ⟩ ⟩ := X'
+  let X : fundamentalFibration.obj I ⟶ P := by unfold psh at X ; exact X
+  obtain ⟨ ⟨ J ⟩ , ⟨ Y ⟩ ⟩ := Y'
+
+  let Y : fundamentalFibration.obj J ⟶ P := by unfold psh at Y ; exact Y
+  have φIsIsoOnFibers := cartMorphsAreIsosOnFiber hφ
+  --have this : E_functor_map φ = fiberMap φ ≫ X.unop.2.unop.1.left.map (Over.homMk φ.unop.1.unop) := rfl
+
+  apply compCartesianMorphisms
+  ·
+    --have eq : fiberMap φ = φ.unop.fiber.unop.1.app (Over.mk (𝟙 _)) ≫ replaceTargetOfFiberMap' φ := by rfl -- f.1.app (mk (𝟙 _)) ≫ replaceTargetOfFiberMap' φ := by rfl
+    --rw [eq]
+    have iso1 := cartMorphsAreIsosOnFiber hφ
+    have iso1 : IsIso φ.unop.fiber.unop.1 := forgetFibration.map_isIso φ.unop.fiber.unop
+
+    have iso1 : IsIso (φ.unop.fiber.unop.1.app (Over.mk (𝟙 _))) := NatIso.isIso_app_of_isIso φ.unop.fiber.unop.1 _
+    have iso2 : IsIso (replaceTargetOfFiberMap' φ):= instIsIsoEqToHom (replaceTargetOfFiberMap φ)
+
+    have isoComp : IsIso (φ.unop.fiber.unop.1.app (Over.mk (𝟙 _)) ≫ replaceTargetOfFiberMap' φ) := IsIso.comp_isIso  ;
+    let uX := (((yoObj P).map (fundamentalFibration.map (φ.unop.1.unop)).op).obj X)
+    let t : ((Y / J).obj (⟨ mk (𝟙 _) ,rfl⟩ )).1 ⟶ ((uX / J).obj (⟨ mk (𝟙 _) ,rfl⟩ )).1 := rewrittenTrafo φ.unop.fiber.unop.1 ⟨ Over.mk (𝟙 _) , rfl⟩
+    have tIsVerti : isVertical (X:= (Y / J).obj (⟨ mk (𝟙 _) ,rfl⟩ )) t  := by apply  φ.unop.fiber.unop.2 -- rewrittenTrafo (B:=B) (φ.unop.fiber.unop.1) ⟨ Over.mk (𝟙 _) , rfl⟩
+    have rew : φ.unop.fiber.unop.1.app (Over.mk (𝟙 _)) ≫ replaceTargetOfFiberMap' φ = t ≫ eqToHom (replaceTargetOfFiberMap φ) := by apply (· =≫_) ; symm ; calc
+      rewrittenTrafo φ.unop.fiber.unop.1 ⟨ Over.mk (𝟙 _) , rfl⟩  = eqToHom (rfl) ≫  φ.unop.fiber.unop.1.app (Over.mk (𝟙 _))  ≫ eqToHom (rfl) := by rfl
+      _ = φ.unop.fiber.unop.1.app (Over.mk (𝟙 _)) := by rw [eqToHom_refl , eqToHom_refl, Category.comp_id , Category.id_comp]
+
+    let iso : (Y / J).obj (⟨ mk (𝟙 _) ,rfl⟩ ) ≅  (X / J).obj ⟨ mk φ.unop.base.unop , rfl ⟩  := by
+      apply toFiberIso ; swap
+      · exact asIso (φ.unop.fiber.unop.1.app (Over.mk (𝟙 _)) ≫ replaceTargetOfFiberMap' φ)
+      · rw [asIso_hom]
+        rw [rew]
+        exact compPresVertical t (eqToHom (_)) tIsVerti (anyPathIsAutomaticallyVertical  (_))
 
 
-def E (P : fibration B) : Sp.obj P ⥤c P := ⟨
-  Over.homMk E_functor E_functor_IsOverB , by sorry ⟩
+
+    have this :iso.hom.1 = fiberMap φ := by rfl
+    rw [← this]
+    apply verticalIsosAreCart (P:=P)
+
+
+
+  · apply  X.2
+    apply automaticallyCart (domainIsDiscrete I) -- (Over.homMk φ.unop.base.unop)
+    --have test : isCartesianMorphism fib.1 morph :=automaticallyCart isDisc motph
+    --exact test
+lemma eq_whisker_eq {C : Cat} {X Y Z : C} {f f' : X ⟶ Y} {g g' : Y ⟶ Z} (p : f = f') ( q : g = g') : f ≫ g = f' ≫ g' := by
+  rw [p]
+  rw [q]
+def TriangleOnFibersCommutesObj {P : fibration  B} {I : B}  (X : ((psh.obj P).obj (Opposite.op I)).1) :  (fiberComparisonFunctor (psh.obj P) (Opposite.op I) ⋙
+  toFunctorOnFibers (E P) I).obj X =  E'_obj.obj X := by
+    simp ; apply Subtype.ext ; aesop ;
+
 theorem TriangleOnFibersCommutes {P : fibration  B} {I : B} :
   fiberComparisonFunctor (psh.obj P) (Opposite.op I) ⋙
-  (toFunctorOnFibers (E P) I) =
+  toFunctorOnFibers (E P) I =
   E'_obj (P:=P) (I:=I) := by
-    apply Functor.ext ; swap ; intro X; simp ; apply Subtype.ext ; aesop ;
-    sorry
-theorem EisEquiv {P : fibration B} : IsEquivalence (E P).1.left := by
+-- (F:= fiberComparisonFunctor (psh.obj P) (Opposite.op I) ⋙ (toFunctorOnFibers (E P) I))
+    apply Functor.ext   ; swap
+    · intro X; exact TriangleOnFibersCommutesObj X
+    · intro X Y f ; apply Subtype.ext ;
+      --let X : fundamentalFibration.obj I ⟶ P := by unfold psh at X ; exact X
+      --let Y : fundamentalFibration.obj I ⟶ P := by unfold psh at Y ; exact X
+
+      --let u : I ⟶ I := f.unop.base.unop
+      --obtain ⟨ X , cX  ⟩ := X.1
+      --obtain ⟨ Y , cY  ⟩ := Y.1
+      -- obtain ⟨ ⟨ u ⟩ , ⟨ f ⟩ ⟩ := f.1
+      --let imgF : (E'_obj_obj Y).1 ⟶ (E'_obj_obj X).1 := E_functor_map f
+      --have this : ((E P / I).map f).1 =() := by rfl
+     -- let idFromf :=
+      let fcF := fiberComparisonFunctor (psh.obj P) (Opposite.op I)
+      have goal : (fcF.map f).1 = ⟨ 𝟙 (Opposite.op I) , Opposite.op (fiberComparisonFunctor_map_fib f)⟩ := by apply fiberComparisonFunctor_map_coe
+      let myFiberMapFiberUnop :  ((fcF.obj X).1).unop.fiber.unop ⟶  (((psh.obj P ⋙ opFunctor).map (𝟙 (Opposite.op I))).obj ((fcF.obj Y).1).unop.fiber).unop := fiberComparisonFunctor_map_fib f
+      let myFiberMapFiber : ((psh.obj P ⋙ opFunctor).map (𝟙 (Opposite.op I))).obj ((fcF.obj Y).1).unop.fiber ⟶ ((fcF.obj X).1).unop.fiber := Opposite.op myFiberMapFiberUnop
+      let myFiberMap : (fcF.obj X) ⟶ (fcF.obj Y) :=  ⟨ ⟨ 𝟙 (Opposite.op I) , myFiberMapFiber⟩ , by sorry⟩ --aesop
+      have test : rewrittenTrafo f.1 ⟨ Over.mk (𝟙 I ) , rfl ⟩ = f.1.app (Over.mk (𝟙 _)) := by aesop
+      have test2 : myFiberMap.1.unop.fiber.unop.1.app (Over.mk (𝟙 _)) = myFiberMapFiber.unop.1.app (Over.mk (𝟙 _))  := by rfl
+      have path : (((psh.obj P ⋙ opFunctor).map (𝟙 (Opposite.op I))).obj ((fcF.obj Y).1).unop.fiber).unop = Y :=  by rw [Functor.map_id] ;rfl
+      have test3 : myFiberMapFiberUnop ≫ eqToHom (path) = f := by
+        calc
+        _ = (eqToHom (_) ≫ f ≫ eqToHom (_)) ≫ eqToHom (path) := by apply (· =≫_) ; rfl
+        _ = f ≫ eqToHom (_) := by rw [eqToHom_refl, Category.id_comp , Category.assoc, eqToHom_trans]; rfl
+        _ = f ≫ 𝟙 _  := by apply (_≫=·) ; rw [eqToHom_refl]
+        _ = _ := by rw [Category.comp_id]
+
+      have test3' : ∀ u , myFiberMapFiberUnop.1.app u ≫ eqToHom (_) = f.1.app u := fun u ↦ by symm ; rw [← test3] ; calc
+          (myFiberMapFiberUnop ≫ eqToHom path).1.app u = (forgetFibration.map (myFiberMapFiberUnop ≫ eqToHom path)).app u := by rfl
+          _ = (forgetFibration.map (myFiberMapFiberUnop) ≫ forgetFibration.map (eqToHom path)).app u := by rw [Functor.map_comp]
+          _ = (forgetFibration.map (myFiberMapFiberUnop)).app u ≫ (forgetFibration.map (eqToHom path)).app u := by rfl
+          _ = myFiberMapFiberUnop.1.app u ≫ eqToHom (_) := by apply (_≫=· ) ; rw [eqToHom_map forgetFibration] ; apply eqToHom_app
+        --· sorry
+      have obs: eqToHom (congrArg FiberToTotalSpace.obj (TriangleOnFibersCommutesObj X)) = 𝟙 _ := by apply eqToHom_refl
+
+
+      have remainingGoal: (myFiberMap.1.unop.fiber.unop.1.app (Over.mk (𝟙 _)) ≫ replaceTargetOfFiberMap' (myFiberMap.1)) ≫ Y.1.left.map (Over.homMk (𝟙 _))
+        = eqToHom (congrArg FiberToTotalSpace.obj (TriangleOnFibersCommutesObj X)) ≫  rewrittenTrafo f.1 ⟨ Over.mk (𝟙 I ) , rfl ⟩ ≫ eqToHom (congrArg FiberToTotalSpace.obj (symm (TriangleOnFibersCommutesObj Y)))  := by calc
+        _ = (myFiberMapFiber.unop.1.app (Over.mk (𝟙 _)) ≫ eqToHom ( replaceTargetOfFiberMap (myFiberMap.1))) ≫ Y.1.left.map (𝟙 _) := eq_whisker_eq (test2 =≫ _) (congrArg Y.1.left.map (by rfl))
+        _ = (myFiberMapFiber.unop.1.app (Over.mk (𝟙 _)) ≫ eqToHom ( replaceTargetOfFiberMap (myFiberMap.1))) ≫ (𝟙 _) := by apply (_≫=· ) ; apply Functor.map_id
+        _ = myFiberMapFiber.unop.1.app (Over.mk (𝟙 _)) ≫ eqToHom ( replaceTargetOfFiberMap (myFiberMap.1)) := by apply Category.comp_id
+        _ = myFiberMapFiberUnop.1.app (Over.mk (𝟙 _)) ≫ eqToHom ( replaceTargetOfFiberMap (myFiberMap.1)) := by apply (· =≫_) ; rfl
+        _ = (myFiberMapFiberUnop.1.app (Over.mk (𝟙 _)) ≫ eqToHom (_) )≫ eqToHom (congrArg FiberToTotalSpace.obj (symm (TriangleOnFibersCommutesObj Y))) := by symm ; rw [Category.assoc , eqToHom_trans] ; rfl
+        _ = f.1.app (Over.mk (𝟙 _)) ≫ eqToHom (congrArg FiberToTotalSpace.obj (symm (TriangleOnFibersCommutesObj Y))) := by apply (· =≫_) ; exact test3' (Over.mk (𝟙 _))
+        _ = eqToHom (congrArg FiberToTotalSpace.obj (TriangleOnFibersCommutesObj X)) ≫ f.1.app (Over.mk (𝟙 _)) ≫ eqToHom (congrArg FiberToTotalSpace.obj (symm (TriangleOnFibersCommutesObj Y))) := by symm ; rw [Category.id_comp ]
+        _= _ := by apply (_≫=· ) ; apply (·=≫_) ; exact (test.symm)
+
+
+      calc
+      ((fcF ⋙ (E P / I)).map f).1
+        = ((E P / I).map (fcF.map f)).1  := by rw [Functor.comp_map]
+      _ = ((E P / I).map (fcF.map f)).1   := by rfl
+       _ = (E P).1.left.map (fcF.map f).1 := by rfl
+       _ = E_functor_map (fcF.map f).1 := by rfl
+       _ = E_functor_map myFiberMap.1 := by apply congrArg E_functor_map ; exact (goal.symm)
+       _ = fiberMap (myFiberMap.1) ≫ Y.1.left.map (Over.homMk (𝟙 _)) := by unfold E_functor_map ; rfl --; apply (_ ≫= ·) ; rw [Functor.map_id] , 𝟙
+       _ = (myFiberMap.1.unop.fiber.unop.1.app (Over.mk (𝟙 _)) ≫ replaceTargetOfFiberMap' (myFiberMap.1)) ≫ Y.1.left.map (Over.homMk (𝟙 _)) := by rfl
+       _ = eqToHom (congrArg FiberToTotalSpace.obj (TriangleOnFibersCommutesObj X)) ≫  rewrittenTrafo f.1 ⟨ Over.mk (𝟙 I ) , rfl ⟩ ≫ eqToHom (congrArg FiberToTotalSpace.obj (symm (TriangleOnFibersCommutesObj Y)))  := remainingGoal
+      _ = FiberToTotalSpace.map (eqToHom (TriangleOnFibersCommutesObj X)) ≫  FiberToTotalSpace.map (E'_obj.map f) ≫ FiberToTotalSpace.map (eqToHom (symm (TriangleOnFibersCommutesObj Y)))  := by rw [← eqToHom_map FiberToTotalSpace] ; apply (_≫=· ) ; apply (eq_whisker_eq) ; rfl ; symm ; apply eqToHom_map FiberToTotalSpace
+      _ = FiberToTotalSpace.map (eqToHom (TriangleOnFibersCommutesObj X) ≫  E'_obj.map f ≫ eqToHom (symm (TriangleOnFibersCommutesObj Y))) := by symm ; rw [Functor.map_comp , Functor.map_comp]
+
+
+
+
+      -- sorry -- : E'_obj.obj Y = (fiberComparisonFunctor (psh.obj P) (Opposite.op I) ⋙ (E P / I)).obj Y)
+
+theorem EisEquiv {P : fibration B} : isEquivalenceInBicategory (E P) := by
   apply equivalenceOfFibrationsCheckOnFibers ;
   intro I ;
   let X :=  psh.obj P

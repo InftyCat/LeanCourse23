@@ -169,13 +169,17 @@ def Grothendieck : PShCat B ⥤ splitFibration B where
   map := by sorry
   map_comp := by sorry
   map_id := by sorry
-
-def fiberComparisonFunctor (P : PShCat B) (I : Bᵒᵖ ) : P.obj I ⥤ (Grothendieck_obj P) ↓ I.unop where --≌
-  obj := fun X ↦ ⟨ ⟨ I , Opposite.op X⟩  , rfl⟩
-  map := fun f ↦ ⟨ ⟨ 𝟙 _ , by simp ; exact Opposite.op f⟩  , by aesop ⟩
+def fiberComparisonFunctorObj {P : PShCat B} {I : Bᵒᵖ } (X : P.obj I) : (Grothendieck_obj P) ↓ I.unop :=  ⟨ ⟨ I , Opposite.op X⟩  , rfl⟩
+def fiberComparisonFunctor_map_fib {P : PShCat B} {I : Bᵒᵖ }  {X Y : P.obj I} (f : X ⟶ Y) :
+  (fiberComparisonFunctorObj X).1.unop.fiber.unop ⟶ (((P ⋙ opFunctor).map (𝟙 I)).obj (fiberComparisonFunctorObj Y).1.unop.fiber).unop := f ≫ eqToHom (by rw [Functor.map_id] ; rfl)
+@[simps] def fiberComparisonFunctor (P : PShCat B) (I : Bᵒᵖ ) : P.obj I ⥤ (Grothendieck_obj P) ↓ I.unop where --≌
+  obj := fun X ↦ fiberComparisonFunctorObj X
+  map := fun f ↦ by exact ⟨ ⟨ 𝟙 I , Opposite.op (fiberComparisonFunctor_map_fib f)⟩  , by aesop ⟩
   map_id := by sorry
   map_comp := by sorry
 theorem fiberComparisonIsEquivalence {P : PShCat B} {I : Bᵒᵖ } : IsEquivalence (fiberComparisonFunctor P I) := by sorry
+
+lemma cartMorphsAreIsosOnFiber {P : PShCat B} {X Y : totop P} {f : X ⟶ Y} (isCart : isCartesianMorphism (Grth P) f) : IsIso f.unop.fiber.unop  := by sorry
 
   /-
    toFun :=

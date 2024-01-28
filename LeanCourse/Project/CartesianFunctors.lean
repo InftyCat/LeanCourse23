@@ -24,13 +24,41 @@ variable {B : Cat.{v₁ , u₁}} {I J K : B}
 
 variable {P Q : fibration B}(F : P ⟶ Q)
 lemma comm  : ∀ {A} , P.1.hom.obj A =  Q.1.hom.obj (F.1.left.obj A) :=  fun {A} ↦ by rw [← Functor.comp_obj , ← Over.w F.1] ; apply Functor.congr_obj ; rfl
-def over_hom_comp {K J I : B} {P : fibration B} {u : J ⟶I } {v : K ⟶J } {X : P[I]} {Y:P[J]}{Z:P[K]}
-  (φ: over_hom u Y X) (ψ : over_hom v Z Y) : over_hom (v ≫ u) Z X := (transLift ⟨ _ , φ ⟩ ⟨_ , ψ⟩ ).φ
-@[simps!] def over_comp    {K J I : B} {P : fibration B} {u : J ⟶I } {v : K ⟶J } {w : K ⟶ I} {X : P[I]} {Y:P[J]}{Z:P[K]}
-  (comm : v ≫ u = w)
-  (φ: over_hom u Y X) (ψ : over_hom v Z Y) : over_hom w Z X
-  := transport comm (over_hom_comp φ ψ)
+
 -- lemma over_comp_coe
+
+lemma verticalIsosAreCart' {P : fibration B} {X Y : P [I]} (f : Y ≅ X) : isCartesian ⟨ Y ,  coercBack f.hom ⟩ := by
+      intro J u L ;
+      --let ψ := L.φ.1 ≫ (morphismToLift f.inv.1).φ.1
+
+      let invLift := (coercBack f.inv)
+      let t := over_comp (by rw [Category.comp_id ,Category.comp_id]) invLift L.φ
+      -- let ψO : over_hom (P:=P.1) u L.Y Y  :=
+      use t
+      constructor
+      · simp
+        calc
+        _ =  (L.φ.1 ≫ f.inv.1) ≫ f.hom.1 := rfl
+        _ = L.φ.1 ≫ (f.inv ≫ f.hom).1 := by rw [Category.assoc] ; apply (_≫=· ) ; rfl
+        _ = L.φ.1 ≫ FiberToTotalSpace.map (𝟙 X) := by rw[f.inv_hom_id] ; rfl
+        _ = L.φ.1 := by rw [Functor.map_id ] ; aesop
+
+
+      · intro t' ht'
+        apply Subtype.ext
+
+        trans L.φ.1 ≫ f.inv.1
+        · apply (Iso.eq_comp_inv (FiberToTotalSpace.mapIso f)).2
+          exact ht'
+        · {
+            symm
+            simp
+            unfold over_hom_comp
+            unfold transLift
+            rfl
+          }
+
+
 
 
 def cartLiftToCartMor {P : fibration B } {J I : B} {u : J ⟶ I} {X : obj_over (P:=P.1.hom) I}
@@ -65,6 +93,7 @@ def cartLiftToCartMor {P : fibration B } {J I : B} {u : J ⟶ I} {X : obj_over (
     -- rw [over_comp_coe]
     sorry
     sorry
+lemma verticalIsosAreCart {P : fibration B} {X Y : P [I]} (f : Y ≅ X) : isCartesianMorphism P.1 (f.hom.1) := cartLiftToCartMor ⟨ _ , verticalIsosAreCart' f⟩
 
 @[simp] noncomputable def cartesianLiftFromFibration (P : fibration B) {J I} (u : J ⟶ I) (X : P[I]) : cartesianLiftOfAlong X u := ⟨(P.2 u X).choose , (P.2 u X).choose_spec⟩
 

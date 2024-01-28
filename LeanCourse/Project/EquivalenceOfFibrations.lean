@@ -4,6 +4,7 @@ import Mathlib.CategoryTheory.Equivalence
 import LeanCourse.Project.FiberedCategories
 import LeanCourse.Project.CartesianComposition
 import LeanCourse.Project.CartesianFunctors
+import LeanCourse.Project.FibrationBicategory
 --import LeanCourse.Project.PreSheavesOfCategories
 set_option linter.unusedVariables false
 open Lean Meta Elab Parser Tactic PrettyPrinter
@@ -29,8 +30,7 @@ variable {P Q : fibration B}{F : P ⟶ Q}
 --notation (priority := high) P "[" A "]" => obj_over (P:=P.1.hom) A
 
 theorem Fullness {F : P ⟶ Q}: (∀ (I : B) ,  IsEquivalence (F / I) ) → (∀ Y X : P.1.left , Function.Surjective (F.1.left.map : (Y ⟶ X) → (F.1.left.obj Y ⟶ F.1.left.obj X))) := by
-sorry
-/-
+
       intro ass
       intro Y X
 
@@ -58,7 +58,7 @@ sorry
         rw [φ.2]
         rw [←Category.assoc,eqToHom_trans]
         rw [←Category.assoc,eqToHom_trans]
-        sorry
+        aesop
 
       obtain ⟨ g , hg⟩  := goal ⟨ _ , Fφ⟩
 
@@ -100,20 +100,27 @@ sorry
        -- (F.1.left.map φ.1) -- aesop
 
 
--/
-/-
- have fullyFaithfull : ∀ Y X : P.1.left , Function.Bijective (F'.map : (Y ⟶ X) → (F'.obj Y ⟶ F'.obj X))   := fun Y X ↦ by
-    constructor
-    · sorry
-    · exact
--/
-class inVertEssImg {P Q : fibration B} (F : P ⟶ Q) {I : B} ( X : obj_over (P:=Q.1.hom) I) where
-  objPreimage : obj_over (P:=P.1.hom) I
-  objObjPreimageIso : (F / I).obj Y ≅ X
-open inVertEssImg
+
+
+def VertEssImg {P Q : fibration B} (F : P ⟶ Q): Set Q.1.left :=  fun X =>
+  ∃ Y : obj_over (P:=P.1.hom) (Q.1.hom.obj X) , Nonempty ((F / (Q.1.hom.obj X)).obj Y ≅ ⟨ X , rfl⟩ )
+
 class VertEssSurj  {P Q : fibration B} (F : P ⟶ Q) : Prop where
-  mem_isVertEssSurj (X : Q.1.left ) : Nonempty (inVertEssImg F ⟨ X , rfl⟩)
+  mem_isVertEssSurj : ∀ (X : Q.1.left ) , X ∈ VertEssImg F
 open VertEssSurj
+@[simp]
+noncomputable def objPreimage  {P Q : fibration B} (F : P ⟶ Q) [VertEssSurj F]  (Y : Q.1.left) : obj_over (P:=P.1.hom) (Q.1.hom.obj Y) :=
+   (mem_isVertEssSurj (F:=F) Y).choose
+
+
+
+
+/-- Applying an essentially surjective functor to a preimage of `Y` yields an object that is
+    isomorphic to `X`. -/
+@[simp]
+noncomputable def objObjPreimageIso   {P Q : fibration B} (F : P ⟶ Q) [VertEssSurj F]  (X : Q.1.left):
+  (F / (Q.1.hom.obj (X))).obj (objPreimage F X)  ≅ ⟨ X , rfl⟩  :=
+  Classical.choice (mem_isVertEssSurj (F:=F) X).choose_spec
 /-
 instance EssSurjOfisVertEssSurj {P Q : fibration B} (F : P ⟶ Q) [VertEssSurj F] : EssSurj F.1.left := by
       constructor ; intro X ;
@@ -131,36 +138,30 @@ The following functions are partly stolen from mathlib Equivalence.
 The problem why i cant use the methods directly is because the inverse of an equivalence on total categories does not have to lie over B
 -/
 @[simps]
-private noncomputable def equivalenceInverse  {P Q : fibration B} (F : P ⟶ Q) [Full F.1.left] [Faithful F.1.left](ves : VertEssSurj F) : Q.1.left ⥤ P.1.left
+private noncomputable def equivalenceInverse  {P Q : fibration B} (F : P ⟶ Q) [Full F.1.left] [Faithful F.1.left][ VertEssSurj F] : Q.1.left ⥤ P.1.left
     where
-  obj X :=  (mem_isVertEssSurj (F:=F) X).objPreimage.choose.1
-  map {X Y} f := F.1.left.preimage (((ves.1 X).objObjPreimageIso).hom.1 ≫ f ≫ (((ves.1 Y).objObjPreimageIso).inv.1))
+  obj X :=  (objPreimage F X).1
+  map {X Y} f := F.1.left.preimage ((objObjPreimageIso F X).hom.1 ≫ f ≫ ((objObjPreimageIso F Y).inv.1))
   map_id X := by apply F.1.left.map_injective;  sorry
   map_comp {X Y Z} f g := by apply F.1.left.map_injective; simp ; sorry
-private noncomputable def equivalenceOverInverse {P Q : fibration B} (F : P ⟶ Q) [Full F.1.left] [Faithful F.1.left] (ves : VertEssSurj F): Q ⟶ P := by
-  have overMorphism : (equivalenceInverse F ves) ⋙ P.1.hom = Q.1.hom :=  by
+private noncomputable def equivalenceOverInverse {P Q : fibration B} (F : P ⟶ Q) [Full F.1.left] [Faithful F.1.left] [ VertEssSurj F]: Q ⟶ P := by
+  have overMorphism : (equivalenceInverse F) ⋙ P.1.hom = Q.1.hom :=  by
 
     apply Functor.ext ; swap ;
     · intro X ; unfold equivalenceInverse ; simp ;
-      obtain ⟨ pre , myIso ⟩ := mem_isVertEssSurj (F:=F) X
+      let pre := (mem_isVertEssSurj (F:=F) X).choose --obtain ⟨ pre , myIso ⟩
       trans (P.1.hom.obj (pre.1))
-      · rfl
+      · apply congrArg P.1.hom.obj ; simp ;-- unfold objPreimage
       · exact pre.2
 
     · sorry
-  use Over.homMk (equivalenceInverse F ves) overMorphism
+  use Over.homMk (equivalenceInverse F) overMorphism
   /-
   remark: In this situation I want to apply that F reflect cartesian morphisms
   -/
   sorry
 
-class IsEquivalenceOfFibrations {P Q : fibration B} (F : P ⟶ Q) where mk' ::
-  /-- The inverse functor to `F` -/
-  inverse : Q ⟶ P
-  /-- Composition `F ⋙ inverse` is isomorphic to the identity. -/
-  unitIso : 𝟙 P ≅ F ≫ inverse
-  /-- Composition `inverse ⋙ F` is isomorphic to the identity. -/
-  counitIso : inverse ≫  F ≅ 𝟙 Q
+
 def CartTrafoOfComp {P Q : fibration B} {F G : P ⟶ Q} (η : F.1.left ≅ G.1.left) (ηhomIsVertical : ∀ {A : B} (T : obj_over (P :=P.1.hom) A) ,
   isVertical (X:=(F / A).obj T) (X':=(G / A).obj T) (rewrittenTrafo η.hom T)) : F ≅ G where
     hom := ⟨ η.hom , ηhomIsVertical⟩
@@ -168,32 +169,55 @@ def CartTrafoOfComp {P Q : fibration B} {F G : P ⟶ Q} (η : F.1.left ≅ G.1.l
     hom_inv_id := by apply Subtype.ext ; exact η.hom_inv_id
     inv_hom_id := by apply Subtype.ext ; exact η.inv_hom_id
 
-
+noncomputable def counit {P Q : fibration B} (F : P ⟶ Q) [Full F.1.left] [Faithful F.1.left]
+  [ VertEssSurj F] : (equivalenceOverInverse F ≫ F).1.left ≅ 𝟙 _ := (NatIso.ofComponents (fun X ↦ FiberToTotalSpace.mapIso (objObjPreimageIso F X)) (by sorry))
 
 noncomputable def ofFullyFaithfullyEssVertSurj {P Q : fibration B} (F : P ⟶ Q) [Full F.1.left] [Faithful F.1.left]
-  (ves : VertEssSurj F) : IsEquivalenceOfFibrations F where
-      inverse := equivalenceOverInverse F ves
+  [ VertEssSurj F] : isEquivalenceInBicategory F where
+      inverse := equivalenceOverInverse F
       unitIso := by
                   apply CartTrafoOfComp ; swap
-                  · exact (NatIso.ofComponents (fun X => (F.1.left.preimageIso <| FiberToTotalSpace.mapIso (ves.1 (F.1.left.obj X)).objObjPreimageIso).symm)
+                  · exact (NatIso.ofComponents (fun X => (F.1.left.preimageIso <| FiberToTotalSpace.mapIso (objObjPreimageIso F (F.1.left.obj X))).symm)
                     fun f => by
                     apply F.1.left.map_injective
                     sorry)
                   · sorry
-      counitIso := by apply CartTrafoOfComp ; swap
-                      · exact (NatIso.ofComponents (fun X ↦ FiberToTotalSpace.mapIso (ves.1 X).objObjPreimageIso) sorry)
-                      · sorry
-theorem equivalenceOfFibrationsCheckOnFibers : (∀ (I : B) ,  IsEquivalence (F / I) ) → IsEquivalenceOfFibrations F := fun ass ↦ by
+      counitIso := by
+                      apply CartTrafoOfComp ; swap
+                      · exact counit F
+                      · intro A T
+                        unfold rewrittenTrafo
+                        rw [eqToHom_refl, eqToHom_refl]
+                        rw [Category.comp_id, Category.id_comp]
+                        --nfold NatIso.ofComponents
+                        unfold isVertical
+                        let φ : ((F / (Q.1).hom.obj T.1).obj (objPreimage F T.1)) ⟶ ⟨ T.1 , rfl⟩  := (objObjPreimageIso F T.1).hom
+                        have hφ' := (objObjPreimageIso F T.1).hom.2
+                        have thisIsExactlyThegoal : isVertical φ.1 := hφ'
+                        unfold isVertical at thisIsExactlyThegoal
+                        have path := ((F / (Q.1).hom.obj T.1).obj (objPreimage F T.1)).2
+                        have test : (Q.1).hom.map ((counit F).hom.app T.1)  = eqToHom (path) := calc
+                          _ = Q.1.hom.map φ.1 := rfl
+                          _ = Q.1.hom.map φ.1 ≫ eqToHom (rfl) := by symm ; rw [eqToHom_refl, Category.comp_id]
+                          _ = eqToHom (path ) := thisIsExactlyThegoal
+                        rw [test]
+                        rw [eqToHom_trans]
+
+
+
+                        --simp
+
+theorem equivalenceOfFibrationsCheckOnFibers : (∀ (I : B) ,  IsEquivalence (F / I) ) → isEquivalenceInBicategory F := fun ass ↦ by
   let F' := F.1.left
-  have essSurj : VertEssSurj F' :=  by
+  have essSurj : VertEssSurj F :=  by
     constructor
     intro q
     let I := Q.1.hom.obj q
     -- specialize ass I
-    obtain ⟨ p , hp ⟩  := (Equivalence.essSurj_of_equivalence (F / I)).mem_essImage ⟨ q , rfl⟩
-    use p.1
+    obtain ⟨ p , ⟨ hp ⟩  ⟩  := (Equivalence.essSurj_of_equivalence (F / I)).mem_essImage ⟨ q , rfl⟩
+    use p
     constructor
-    apply FiberToTotalSpace.mapIso hp
+    apply hp
 
   have full : Full F' := by
     constructor
