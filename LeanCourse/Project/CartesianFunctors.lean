@@ -94,6 +94,38 @@ def cartLiftToCartMor {P : fibration B } {J I : B} {u : J ⟶ I} {X : obj_over (
     sorry
     sorry
 lemma verticalIsosAreCart {P : fibration B} {X Y : P [I]} (f : Y ≅ X) : isCartesianMorphism P.1 (f.hom.1) := cartLiftToCartMor ⟨ _ , verticalIsosAreCart' f⟩
+lemma isVertical_symm {P : Over B} {X X' : obj_over (P:=P.hom) I} (α : X.1 ≅ X'.1) (isVert : isVertical α.hom ) : isVertical α.inv := by
+  unfold isVertical ; symm ;
+  rw [(_ : α.inv = inv α.hom) , Functor.map_inv P.hom, (_ : inv (P.hom.map α.hom) = (P.hom.mapIso α).inv)] ;
+  apply (Iso.eq_inv_comp (P.hom.mapIso α)).2 ; --  := P.map α ≫ CategoryTheory.eqToHom X'.2  = CategoryTheory.eqToHom X.2
+  rw [← isVert]
+  apply (· =≫_)
+  rfl
+  unfold Functor.mapIso
+  simp
+  rw [← Functor.map_inv P.hom α.hom ]
+  apply congrArg P.hom.map
+  aesop
+  aesop
+
+
+
+def CartTrafoOfComp {P Q : fibration B} {F G : P ⟶ Q} (η : F.1.left ≅ G.1.left) (ηhomIsVertical : ∀ {A : B} (T : obj_over (P :=P.1.hom) A) ,
+  isVertical (X:=(F / A).obj T) (X':=(G / A).obj T) (rewrittenTrafo η.hom T)) : F ≅ G where
+    hom := ⟨ η.hom , ηhomIsVertical⟩
+    inv := by
+      use η.inv
+      intro A T
+      exact isVertical_symm (X:=(F / A).obj T) (X':=(G / A).obj T)
+        (Iso.mk (rewrittenTrafo η.hom T) (rewrittenTrafo η.inv T)) (ηhomIsVertical T)
+    hom_inv_id := by apply Subtype.ext ; exact η.hom_inv_id
+    inv_hom_id := by apply Subtype.ext ; exact η.inv_hom_id
+lemma verticalIsosAreCart'' {P : fibration B} {X Y : P [I]} (f : Y.1 ≅ X.1) (hf :isVertical f.hom) : isCartesianMorphism P.1 f.hom := by
+  let g : Y ≅ X := Iso.mk (⟨ f.hom , hf⟩ : Y ⟶ X) (⟨ f.inv , isVertical_symm f hf⟩ : X ⟶ Y) (by apply Subtype.ext ; apply Iso.hom_inv_id) (by apply Subtype.ext ; aesop)
+  have this : isCartesianMorphism P.1 g.hom.1 := verticalIsosAreCart (I:=I) (P:=P) g
+  have goal : f.hom = g.hom.1  := by rfl
+  rw [goal]
+  assumption
 
 @[simp] noncomputable def cartesianLiftFromFibration (P : fibration B) {J I} (u : J ⟶ I) (X : P[I]) : cartesianLiftOfAlong X u := ⟨(P.2 u X).choose , (P.2 u X).choose_spec⟩
 

@@ -48,7 +48,7 @@ def forget : (obj_over (P:=P) A) ⥤ 𝕏 where
 @[simp] lemma idInFib {X : obj_over (P:=P) A} : (𝟙 X : X ⟶ X).1 = 𝟙 X.1 := rfl
 @[simp] def coerc { X X' : obj_over A} (f : over_hom (P:=P) (𝟙 A) X X') : X ⟶ X' := ⟨ f.1 , by rw [isVertical, f.2] ; aesop ⟩
 @[simp] def coercBack {X X' : obj_over A} (f : X ⟶ X') : over_hom (P:=P) (𝟙 A) X X' := ⟨ f.1 , by rw [f.2] ; aesop⟩
-structure liftOfAlong {J I : B} ( X : obj_over (P:=P) I) (u : J ⟶ I)  where
+@[ext] structure liftOfAlong {J I : B} ( X : obj_over (P:=P) I) (u : J ⟶ I)  where
   Y : obj_over (P:=P) J
   φ : over_hom u Y X
 
@@ -114,6 +114,7 @@ theorem cartesianLiftIsUnique {J I : B} {u : J ⟶ I} {X : obj_over (P:=P) I} (L
     obtain ⟨ β , hβ  ⟩ := weakCartifCartesian (X:=X) L' L
 
     obtain ⟨ρ , hρ⟩ := weakCartifCartesian (X:=X) L' L'.1
+    obtain ⟨σ , hσ⟩ := weakCartifCartesian (X:=X) L L.1
     obtain ⟨ ⟨ Y , φ ⟩ , _⟩   := L
     obtain ⟨ ⟨ Z , ψ⟩ , _⟩  := L'
     simp at α
@@ -133,11 +134,20 @@ theorem cartesianLiftIsUnique {J I : B} {u : J ⟶ I} {X : obj_over (P:=P) I} (L
       apply hρ
       have this : (𝟙 _) ≫ ψ.1 = ψ.1 := by rw [Category.id_comp]
       exact this
-    have bah : (β ≫α  ).1 ≫ φ.1 = φ.1  := by sorry
-    have bah : β ≫ α= 𝟙 _ := by sorry
+    have bah : (β ≫α  ).1 ≫ φ.1 = φ.1  := by calc
+      _ = (β.1 ≫ α.1) ≫ φ.1 := by rfl
+      _ = β.1 ≫ α.1 ≫ φ.1 := by rw [Category.assoc]
+      _ = β.1 ≫ ψ.1 := by rw [hα.1 ]
+      _ = φ.1 := hβ.1
 
-      -- trans ((𝟙 (L'.1).Y) ≫ (L'.1).φ )
-
+    have bah : β ≫ α= 𝟙 _ := by
+      trans σ
+      apply hσ.2
+      exact bah
+      symm
+      apply hσ.2
+      have this : (𝟙 _) ≫ φ.1 = φ.1 := by rw [Category.id_comp]
+      exact this
     let myiso : Z ≅ Y  := ⟨ α , β , abh, bah ⟩
 
     have h : myiso.hom = α := rfl
@@ -180,12 +190,13 @@ def cartesianFunctor
 scoped infixr:80 " ⥤c   " => cartesianFunctor
 @[ext] lemma extCartFunctor {P Q : fibration B} (F G : P ⥤c Q) (p : F.1 = G.1) : F = G := Subtype.ext p
 instance {P Q : fibration B} : CoeOut (P ⥤c Q) (P.1.1 ⥤ Q.1.1) := ⟨fun α ↦ α.1.left⟩
-def objMappingBetweenFibers {P Q : fibration B} (F : P ⥤c Q) (A : B) : obj_over (P:=P.1.hom) A → obj_over (P:=Q.1.hom) A := by
-  intro X
-  use (F : P.1.1 ⥤ Q.1.1).obj X.1
 
-  trans (F.1.1 ≫ Q.1.hom).obj X.1 ; rfl ;
-  have this : F.1.1 ≫ Q.1.hom = P.1.hom := F.1.3 ;
+def objMappingBetweenFibers {P Q : fibration B} (F : P.1 ⟶ Q.1) {A : B} : obj_over (P:=P.1.hom) A → obj_over (P:=Q.1.hom) A := by
+  intro X
+  use (F.left : P.1.left ⥤ Q.1.left).obj X.1
+
+  trans (F.left ≫ Q.1.hom).obj X.1 ; rfl ;
+  have this : F.left ≫ Q.1.hom = P.1.hom := F.3 ;
   rw [this]
   exact X.2
 
@@ -194,25 +205,25 @@ def isIdentity  {𝕏 : Type u₁} [Category.{v₁} 𝕏] {X Y : 𝕏} (f : X �
 
 def toFunctorOnFibers (F : P ⥤c Q) (A : B) :
   Functor (obj_over (P := P.1.hom) A) (obj_over (P := Q.1.hom) A) where
-    obj := objMappingBetweenFibers F A
+    obj := objMappingBetweenFibers F.1
 
     map := fun {X Y} (f : X ⟶ Y) ↦ by
       use (F.1.left).map f.1
       simp
       let FQ : P.1.1 ⟶ B := F.1.1 ≫ Q.1.hom
       have this : FQ = P.1.hom := F.1.3 ;
-      have myEq : (F.1.1 ≫ Q.1.hom).obj Y.1 = A := (objMappingBetweenFibers F A Y).2
+      have myEq : (F.1.1 ≫ Q.1.hom).obj Y.1 = A := (objMappingBetweenFibers F.1 Y).2
       trans (FQ.map f.1 ≫ eqToHom myEq)
       rfl
       let myEq1 (Z : obj_over (P:=P) A) : FQ.obj Z.1 = P.1.hom.obj Z.1 := by rw [this]
-      have myNat : FQ ⟶ P.1.hom := eqToHom F.1.3
-      have this {Y : obj_over A} : eqToHom (myEq1 Y) = myNat.app Y.1 := by sorry
-      have EqEq : myEq = _root_.trans (myEq1 Y) Y.2 := rfl
+      let myNat : FQ ⟶ P.1.hom := eqToHom F.1.3
+      have this {Y : obj_over A} : eqToHom (myEq1 Y) = myNat.app Y.1 := (eqToHom_app F.1.3 Y.1).symm
+      have EqEq : myEq = (myEq1 Y).trans Y.2 := rfl
       have EqHom : eqToHom myEq = eqToHom (myEq1 Y) ≫ eqToHom Y.2 := by rw [EqEq] ; rw [eqToHom_trans]
       rw [EqHom, ← Category.assoc , this ,  myNat.naturality , Category.assoc , f.2 ]
       rw [← this  , eqToHom_trans]
-    map_id := by sorry
-    map_comp := by sorry
+    map_id := fun X ↦ by apply Subtype.ext ; aesop
+    map_comp := fun f g ↦ by apply Subtype.ext ; aesop
 
 scoped infixr:70 " / " => toFunctorOnFibers
 
@@ -248,12 +259,21 @@ scoped infixr:80 " =>c " => cartesianNatTrans
 
 def trafoOnFibers (η : F =>c G) (A : B) : F / A ⟶ G / A where
   app := by
-    obtain  ⟨ η : F.1.left ⟶ G , isCart ⟩ := η
     intro X
-    use rewrittenTrafo η X ;
-    exact (isCart X)
+    use rewrittenTrafo η.1 X ;
+    exact (η.2 X)
 
-  naturality := by sorry
+  naturality := fun {X} {Y} f ↦ by
+    apply Subtype.ext
+    have nat := η.1.naturality f.1
+    calc
+    ((F / A).map f ≫ ⟨ rewrittenTrafo η.1 Y , _⟩ ).1 = F.1.left.map f.1 ≫ rewrittenTrafo η.1 Y := by rfl
+    _ = rewrittenTrafo η.1 X ≫ G.1.left.map f.1 := by
+      unfold rewrittenTrafo ;
+      rw [eqToHom_refl, eqToHom_refl,eqToHom_refl,eqToHom_refl] ;
+      rw [Category.comp_id,Category.comp_id, Category.id_comp,Category.id_comp,]
+      exact nat
+    _  =_ := by rfl
 instance : Category (fibration B) where
   Hom := fun P Q ↦ P ⥤c Q
   id := fun P ↦ by use 𝟙 P.1 ; intro φ hφ ; simp

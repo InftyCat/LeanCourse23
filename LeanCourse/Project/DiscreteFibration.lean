@@ -4,6 +4,7 @@ import Mathlib.CategoryTheory.Opposites
 import Mathlib.CategoryTheory.Functor.Category
 import Mathlib.CategoryTheory.EqToHom
 import LeanCourse.Project.FiberedCategories
+import LeanCourse.Project.CartesianComposition
 set_option linter.unusedVariables false
 open Lean Meta Elab Parser Tactic PrettyPrinter
 set_option autoImplicit true
@@ -61,36 +62,69 @@ lemma discImpWeakDisc {P : Over B} (q : isDiscreteOverB P) : (weakDiscreteOverB 
   have this : idLift = lift := uniqueLiftFromDiscreteness q
   sorry
 def Ov (I : B) : Cat := ⟨  Over I , commaCategory  ⟩
-def domainOver (I : B) : Over B where
+@[simps] def domainOver (I : B) : Over B where
   left := Ov I
   right := default
   hom := Over.forget I
 @[simp] lemma idDomainOver (I : B) : (domainOver I).left = Ov I := rfl
-def domainLift {A : B} (u : J ⟶ I) (X : obj_over I) : liftOfAlong (B:=B) (P:=(domainOver A).hom) X u := by
+@[simp] def domainLift {A : B} (u : J ⟶ I) (X : obj_over I) : liftOfAlong (B:=B) (P:=(domainOver A).hom) X u := by
       let a := u ≫ eqToHom (symm X.2)
-      let y : J ⟶ A  := a ≫ X.1.hom
-      let Y : obj_over (P:=(domainOver A).hom) J := ⟨ Over.mk y , rfl⟩
-      let α : Y.1 ⟶ X.1 := Over.homMk a
-      -- let hα : (domainOver A).hom.map α ≫ eqToHom (_ : (domainOver A).hom.obj ↑X = I) = eqToHom (_ : (domainOver A).hom.obj ↑Y = J) ≫ u
-      exact ⟨Y , ⟨ α , by rw [eqToHom_refl , Category.id_comp ] ; apply (comp_eqToHom_iff _ _ _).2 ; aesop⟩  ⟩
-/-
-lemma strongDiscreteness {A : B} (u : J ⟶ I ) (X : obj_over I)
-  (L : liftOfAlong (P:=(domainOver A).hom) X u) :  ∃ (p :  L.Y.1 = (domainLift u X).Y.1) , L.φ.1 = eqToHom p ≫ (domainLift u X).φ.1  := by
-  obtain ⟨ Y , φ ⟩ := L
-  obtain ⟨φ , hφ⟩ := φ
-  let p : Y.1 = (domainLift u X).Y.1 := by
-    apply Subtype.ext
-  use p
-  have lol : φ.left = u
-  have this : Y.1.hom = φ.left ≫ X.1.hom := by aesop
-  simp
-  apply Over.OverMorphism.ext
--/
-lemma domainIsDiscrete (A : B) : isDiscreteOverB (domainOver A) := fun {J I} u X ↦ by use (domainLift u X) ; sorry
+      use ⟨ Over.mk (a ≫ X.1.hom) , rfl⟩
+      exact ⟨ Over.homMk a , by rw [eqToHom_refl , Category.id_comp ] ; apply (comp_eqToHom_iff _ _ _).2 ; aesop⟩
 
-def automaticallyCart {P : Over B} (q : isDiscreteOverB P) {X Y : P.left} (f : X ⟶ Y) : isCartesianMorphism P f := by sorry
+lemma domainIsDiscrete (A : B) : isDiscreteOverB (domainOver A) := fun {J I} u v ↦ by
+  use (domainLift u v)
+  intro L
+  obtain ⟨ w , u'⟩ := L
+  ext
+  apply Subtype.ext
+  simp
+  have this := u'.2
+  simp at this
+  let u1 := Over.w u'.1
+  have goal : u ≫ eqToHom (v.2.symm) ≫ v.1.hom = eqToHom (w.2.symm) ≫  w.1.hom := by
+    rw [← u1]
+    symm ;
+    calc
+    eqToHom (_ : J = (domainOver A).hom.obj w.1) ≫ (u'.1).left ≫ v.1.hom =
+    eqToHom (w.2.symm) ≫ ((u'.1).left ≫  eqToHom (v.2)) ≫ eqToHom (symm v.2) ≫ v.1.hom := by symm ; rw [Category.assoc] ; apply (_≫=· ) ; apply (_≫=· ) ; rw [← Category.assoc , eqToHom_trans, eqToHom_refl, Category.id_comp]
+    _ = eqToHom (w.2.symm) ≫ (eqToHom (w.2) ≫ u) ≫ eqToHom (symm v.2) ≫ v.1.hom := by rw [this]
+    _ = (eqToHom (w.2.symm) ≫ eqToHom (w.2) ≫ u) ≫ eqToHom (symm v.2) ≫ v.1.hom := by rw [← Category.assoc]
+     _ = ((eqToHom (w.2.symm) ≫ eqToHom (w.2)) ≫ u) ≫ eqToHom (symm v.2) ≫ v.1.hom := by apply (· =≫_ ) ; rw [← Category.assoc]
+    _ = _ := by rw [eqToHom_trans , eqToHom_refl , Category.id_comp]
+
+  congr
+  · exact w.2.symm
+  · rw [goal] ; apply (Functor.conj_eqToHom_iff_heq (eqToHom w.2.symm ≫ w.1.hom) (w.1.hom) (w.2.symm) rfl).1
+    rw [eqToHom_refl, Category.comp_id]
+
+
+
+  -- (morphismToLift f)
+
+
 
 @[simp] def fundamentalFibrationObj (A : B) : fibration B := discreteIsCartesian (domainIsDiscrete A)
+
+lemma automaticallyCart {X Y : Ov A} (f : X ⟶ Y) : isCartesianMorphism (domainOver A) f := by
+  intro k v L
+    --obtain ⟨ l , vFf ⟩ :=
+
+  obtain ⟨ l' , hl'⟩   := domainIsDiscrete A v ⟨ X , rfl⟩
+  let u := (domainOver A).hom.map f
+  let f' : over_hom u ⟨ X , rfl⟩ ⟨ Y , rfl⟩ := ⟨ f , by sorry ⟩
+  let P := fundamentalFibrationObj A
+  let L' : over_hom (v ≫ u) l'.Y ⟨ Y , rfl⟩  := over_hom_comp (P:=P) f' l'.φ
+
+  let L' : liftOfAlong (P:=P) ⟨ Y , rfl⟩ (v ≫ u)   := ⟨ (l'.Y : obj_over (P:=P) k) , by sorry⟩
+
+
+
+  have this : L' = L := by apply hl'
+
+
+
+  use l.φ
 @[simp] def fundamentalFibrationMap {J I : B} (u : J ⟶ I) : fundamentalFibrationObj J ⥤c fundamentalFibrationObj I
   := ⟨ Over.homMk (Over.map u) , fun {X} {Y} φ hφ ↦ automaticallyCart (domainIsDiscrete I) _⟩
 @[simp] lemma idFibration (F : fibration B) : (𝟙 F : F ⥤c F).1 = 𝟙 F.1 := rfl
@@ -112,8 +146,8 @@ lemma fundamentalFibration_map_comp {K J I : B} (v : K ⟶ J ) ( u : J ⟶ I) :
   map_comp := fun v u ↦ fundamentalFibration_map_comp v u
   map_id := fun X ↦ fundamentalFibration_map_id
 
-
-/- lemma domainIsDisc : isDiscrete (fundamentalFibration A) := fun {D} {X} {Y} f ↦ by
+/-
+lemma domainIsDisc : isDiscrete (fundamentalFibration A) := fun {D} {X} {Y} f ↦ by
   let p : X.1 = Y.1 := by
     sorry
   use p
@@ -123,7 +157,8 @@ lemma fundamentalFibration_map_comp {K J I : B} (v : K ⟶ J ) ( u : J ⟶ I) :
   rw [helper]
   sorry
 
-
+-/
+/-
    ∀ {K : B} (v : K ⟶ J) (L: liftOfAlong X (v ≫u )) ,
     ∃! ψ : over_hom v L.Y τ.Y , ψ.1 ≫ τ.φ.1 = L
 -/

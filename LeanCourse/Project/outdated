@@ -1,0 +1,13 @@
+/-
+lemma strongDiscreteness {A : B} (u : J ⟶ I ) (X : obj_over I)
+  (L : liftOfAlong (P:=(domainOver A).hom) X u) :  ∃ (p :  L.Y.1 = (domainLift u X).Y.1) , L.φ.1 = eqToHom p ≫ (domainLift u X).φ.1  := by
+  obtain ⟨ Y , φ ⟩ := L
+  obtain ⟨φ , hφ⟩ := φ
+  let p : Y.1 = (domainLift u X).Y.1 := by
+    apply Subtype.ext
+  use p
+  have lol : φ.left = u
+  have this : Y.1.hom = φ.left ≫ X.1.hom := by aesop
+  simp
+  apply Over.OverMorphism.ext
+-/
