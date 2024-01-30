@@ -17,25 +17,43 @@ universe v₁ u₁ --v₂ u₁ u₂
 
 namespace FiberedCategories
 
-variable {B : Cat.{v₁ , u₁}} {I J K : B}
-notation (priority := high) P "[" A "]" => obj_over (P:=P.1.hom) A
-@[simps] def  transport  {P : fibration B} {A A' : B} {u u' : A ⟶ A'} {X : P[A]} {X' : P[A']}
+variable {B : Cat.{v₁ , u₁}} {I J K : B}  {P : Over B}
+local notation (priority := high) P "[" A "]" => obj_over (P:=P.hom) A
+@[simps] def  transport {A A' : B} {u u' : A ⟶ A'} {X : P[A]} {X' : P[A']}
   (p : u = u') (f : over_hom u X X') : over_hom u' X X' := by
   use f.1
   rw [← whisker_eq (CategoryTheory.eqToHom X.2) p]
   exact f.2
 
-@[simp] def transportLift {J I : B} {P : fibration B} {X : P[I]} {u u' : J ⟶ I}(p : u = u')
-  (L : liftOfAlong X u) : liftOfAlong (P:=P.1.hom) X u' := by
+@[simp] def transportLift {J I : B} {X : P[I]} {u u' : J ⟶ I}(p : u = u')
+  (L : liftOfAlong X u) : liftOfAlong (P:=P.hom) X u' := by
   obtain ⟨  Y , φ ⟩ := L
   exact ⟨ Y , transport p φ⟩
-def over_hom_comp {K J I : B} {P : fibration B} {u : J ⟶I } {v : K ⟶J } {X : P[I]} {Y:P[J]}{Z:P[K]}
+
+@[simps!] def over_hom_comp {K J I : B} {u : J ⟶I } {v : K ⟶J } {X : P[I]} {Y:P[J]}{Z:P[K]}
   (φ: over_hom u Y X) (ψ : over_hom v Z Y) : over_hom (v ≫ u) Z X := (transLift ⟨ _ , φ ⟩ ⟨_ , ψ⟩ ).φ
-@[simps!] def over_comp    {K J I : B} {P : fibration B} {u : J ⟶I } {v : K ⟶J } {w : K ⟶ I} {X : P[I]} {Y:P[J]}{Z:P[K]}
+@[simps!] def over_comp    {K J I : B} {u : J ⟶I } {v : K ⟶J } {w : K ⟶ I} {X : P[I]} {Y:P[J]}{Z:P[K]}
   (comm : v ≫ u = w)
   (φ: over_hom u Y X) (ψ : over_hom v Z Y) : over_hom w Z X
   := transport comm (over_hom_comp φ ψ)
-lemma compPresCartesian' {P : fibration B} {u : J ⟶ I }  {v : K ⟶ J} {t : K ⟶ I} {X : P[I]}
+lemma liftOfAlong_ext  {I : B} {X : obj_over (P:=P.hom) I} {u : J ⟶ I} {L L' : liftOfAlong X u}
+  (p : L.Y.1 = L'.Y.1) (hφ : L.φ.1 = (eqToHom p) ≫ L'.φ.1  ) : L = L' := by
+    obtain ⟨ Y , φ ⟩ := L
+    obtain ⟨ Y' , φ'⟩ := L'
+    cases Y
+    --cases Y'
+    dsimp at p
+    subst p
+    --cases Y'
+    cases φ
+    dsimp at hφ
+    rw [Category.id_comp] at hφ
+    subst hφ
+    rfl
+
+
+
+lemma compPresCartesian'  {u : J ⟶ I }  {v : K ⟶ J} {t : K ⟶ I} {X : P[I]}
    (Y : cartesianLiftOfAlong X u) (Z : cartesianLiftOfAlong Y.Y v) (comm : v ≫ u = t):
    isCartesian (⟨ _ , over_comp comm Y.φ Z.φ ⟩  ) := fun {L} w W ↦ by
     let W' : liftOfAlong X ((w ≫ v) ≫ u) := transportLift (by rw [symm comm , symm (Category.assoc _ _ _)]) W
@@ -70,21 +88,21 @@ lemma compPresCartesian' {P : fibration B} {u : J ⟶ I }  {v : K ⟶ J} {t : K 
     rw [← this]
     rfl
     -- apply hψY.2
-lemma compPresCartesian {P : fibration B} {u : J ⟶ I }  {v : K ⟶ J} {X : P[I]}
+lemma compPresCartesian{u : J ⟶ I }  {v : K ⟶ J} {X : P[I]}
    (Y : cartesianLiftOfAlong X u) (Z : cartesianLiftOfAlong Y.Y v) :
    isCartesian (transLift Y.1 Z.1 ) := compPresCartesian' Y Z rfl
 
 
 
-lemma compCartesianMorphisms  {P : fibration B}  {X Y Z : P.1.left} {f : X ⟶ Y} {g : Y ⟶ Z}
-  (isCf : isCartesianMorphism P.1 f) (isCg : isCartesianMorphism P.1 g) :
-  (isCartesianMorphism P.1 (f ≫ g)) := by
+lemma compCartesianMorphisms  {X Y Z : P.left} {f : X ⟶ Y} {g : Y ⟶ Z}
+  (isCf : isCartesianMorphism P f) (isCg : isCartesianMorphism P g) :
+  (isCartesianMorphism P (f ≫ g)) := by
     unfold isCartesianMorphism ;
-    let lg : liftOfAlong ⟨ Z , rfl⟩ _ := morphismToLift (P:=P.1.hom) g
-    let lf : liftOfAlong ⟨ Y , rfl⟩ _ := morphismToLift (P:=P.1.hom) f
-    let path : _ = (P.1.hom.map (f ≫ g))  := by rw [Functor.map_comp]
-    let oc : over_hom (P.1.hom.map (f ≫ g)) _ _:= over_comp path lg.φ lf.φ
-    have this : morphismToLift  (P:=P.1.hom) (f ≫ g) = ⟨ _ , oc ⟩  := by sorry
+    let lg : liftOfAlong ⟨ Z , rfl⟩ _ := morphismToLift (P:=P.hom) g
+    let lf : liftOfAlong ⟨ Y , rfl⟩ _ := morphismToLift (P:=P.hom) f
+    let path : _ = (P.hom.map (f ≫ g))  := by rw [Functor.map_comp]
+    let oc : over_hom (P.hom.map (f ≫ g)) _ _:= over_comp path lg.φ lf.φ
+    have this : morphismToLift  (P:=P.hom) (f ≫ g) = ⟨ _ , oc ⟩  := by sorry
     rw [this]
     let goal : isCartesian ⟨ lf.Y , oc⟩  := compPresCartesian' (P:=P) ⟨ _ , isCg⟩ ⟨ _ ,isCf⟩  path
     assumption

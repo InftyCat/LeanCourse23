@@ -243,9 +243,7 @@ def E (P : fibration B) : Sp.obj P ⥤c P := by
     apply automaticallyCart (domainIsDiscrete I) -- (Over.homMk φ.unop.base.unop)
     --have test : isCartesianMorphism fib.1 morph :=automaticallyCart isDisc motph
     --exact test
-lemma eq_whisker_eq {C : Cat} {X Y Z : C} {f f' : X ⟶ Y} {g g' : Y ⟶ Z} (p : f = f') ( q : g = g') : f ≫ g = f' ≫ g' := by
-  rw [p]
-  rw [q]
+
 variable {P : fibration  B} {I : B} {X Y : ((psh.obj P).obj (Opposite.op I)).1}
 def TriangleOnFibersCommutesObj (X : ((psh.obj P).obj (Opposite.op I)).1) :  (fiberComparisonFunctor (psh.obj P) (Opposite.op I) ⋙
   toFunctorOnFibers (E P) I).obj X =  E'_obj.obj X := by

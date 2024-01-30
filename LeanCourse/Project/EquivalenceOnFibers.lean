@@ -112,8 +112,8 @@ theorem equivOnFibers : IsEquivalence E := by
           have isDisc : isDiscreteOverB fib.1 := domainIsDiscrete I
 
 
-          have isCart1 : isCartesianMorphism P.1 (X.1.left.map morph):= X.2 morph (automaticallyCart isDisc morph)
-          have isCart2 : isCartesianMorphism P.1 (Y.1.left.map morph):= Y.2 morph (automaticallyCart isDisc morph)
+          have isCart1 : isCartesianMorphism P.1 (X.1.left.map morph):= X.2 morph (automaticallyCart morph)
+          have isCart2 : isCartesianMorphism P.1 (Y.1.left.map morph):= Y.2 morph (automaticallyCart morph)
           let X' := E_obj_obj X
           let Y' := E_obj_obj Y
           have p1 : P.1.hom.obj X' = I := (comm X).symm

@@ -21,9 +21,10 @@ def substDom {X Y Z : B} (h : X = Y) (f : Y ⟶ Z) : (X ⟶ Z) := CategoryTheory
 def obj_over (A : B) := {X : 𝕏 // P.obj X = A}
 instance : CoeOut (obj_over (P:=P) A) 𝕏 := ⟨fun α ↦ α.1⟩
 @[simp] def isVertical {X X' : obj_over (P:=P) A} (α : X.1 ⟶ X') := P.map α ≫ CategoryTheory.eqToHom X'.2  = CategoryTheory.eqToHom X.2
-def over_hom {A A' : B} (u : A ⟶ A') (X : obj_over (P:=P) A) (X' : obj_over (P:=P) A') :=
-  {α : X.1 ⟶ X' //
-   P.map α ≫ CategoryTheory.eqToHom X'.2  = CategoryTheory.eqToHom X.2 ≫ u }
+def over_hom {A A' : B} (u : A ⟶ A') (X : obj_over (P:=P) A) (X' : obj_over (P:=P) A') := {
+  α : X.1 ⟶ X' //
+  P.map α ≫ CategoryTheory.eqToHom X'.2  = CategoryTheory.eqToHom X.2 ≫ u
+}
 
 @[simp] lemma compPresVertical {X Y Z : obj_over (P:=P) A} (f : X.1 ⟶Y.1 ) (g : Y.1 ⟶ Z.1) (p : isVertical f) (q : isVertical g) :
   isVertical (f ≫ g ) := by
@@ -171,10 +172,8 @@ variable  {B : Cat.{v₁ , u₁}}
 
 instance : CoeDep (Over B) F (F.1 ⥤ B) where
   coe := F.hom
-
-def fibration (B : Cat.{v₁ , u₁}) := { P : Over B  //
-  ∀ {J I : B} (u : J ⟶ I) (X : obj_over (P:=P.hom) I) ,
-    ∃ φ:  liftOfAlong (P:=P.hom) X u , isCartesian φ }
+def isFibration {B : Cat.{v₁ , u₁}} (P : Over B ) : Prop :=  ∀ {J I : B} (u : J ⟶ I) (X : obj_over (P:=P.hom) I) , ∃ φ:  liftOfAlong (P:=P.hom) X u , isCartesian φ
+def fibration (B : Cat.{v₁ , u₁}) := { P : Over B  // isFibration P}
 
 instance : CoeOut (fibration B) (Over B) := ⟨ fun α ↦ α.1⟩
 
