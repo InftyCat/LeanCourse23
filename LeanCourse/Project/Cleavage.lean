@@ -2,6 +2,7 @@ import Mathlib.CategoryTheory.Over
 import Mathlib.CategoryTheory.EqToHom
 import LeanCourse.Project.FiberedCategories
 import LeanCourse.Project.CartesianComposition
+
 set_option linter.unusedVariables false
 open Lean Meta Elab Parser Tactic PrettyPrinter
 set_option autoImplicit true
@@ -17,7 +18,7 @@ universe v₁ u₁ --v₂ u₁ u₂
 
 
 namespace FiberedCategories
-
+local notation (priority := high) P "[" A "]" => obj_over (P:=P.1.hom) A
 variable {B : Cat.{v₁ , u₁}} {I J K : B}
 -- scoped infixr:80 " >> " => fun F G => transLift G F
 

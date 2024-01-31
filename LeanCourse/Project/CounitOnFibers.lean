@@ -42,7 +42,7 @@ def discreteFibration (B : Cat) := {P : fibration B //  isDiscreteOverB P.1}
 noncomputable instance {P : discreteFibration B} : Cleavage P.1 where
   Cart' :=  cartesianLiftFromFibration P.1
 
-lemma splitFromDiscrete {P : discreteFibration B} : split (P:=P.1) instCleavageValFibrationIsDiscreteOverBOverCatCategoryForAllαCategoryHomToQuiverToCategoryStructStrObj_overObjToQuiverToCategoryStructToPrefunctorIdLeftDiscretePUnitDiscreteCategoryFromPUnitObjToQuiverToCategoryStructToPrefunctorRightHomExistsLiftOfAlongIsCartesian :=
+lemma splitFromDiscrete {P : discreteFibration B} : split (P:=P.1) instCleavageValFibrationIsDiscreteOverBOverCatCategoryIsFibration :=
   by
     intro I X
     constructor

@@ -72,32 +72,7 @@ def idCartLift {X : P [I]} : cartesianLiftOfAlong X (𝟙 _) := by
   · sorry
   sorry
 
-
-def cartesianMorphismToCartLift {P : Over B } {I : B} {X : obj_over (P:=P.hom) I} { Y : P.1}  {φ : Y ⟶ X.1}
-  {v : P.hom.obj Y ⟶ I} (comm : v = (P.hom.map φ ≫ eqToHom X.2))
-(hφ : isCartesianMorphism  P φ) :
-  cartesianLiftOfAlong X v where
-  Y := ⟨ Y , rfl⟩
-  φ := ⟨ φ  , by aesop⟩
-  isCart := by sorry --apply compPresCartesian -- sorry --hφ
 theorem equivOnFibers : IsEquivalence E := by
-
-  have essSurj : EssSurj E := by
-    constructor
-    intro X
-    let F : fundamentalFibration.obj I ⥤c P := ⟨
-      OverMorphOnFibers X ,
-      by sorry
-      ⟩
-    use F
-    constructor
-    rw [E'_obj_obj]
-    unfold E_obj_obj
-    unfold toFunctorOnFibers
-    unfold objMappingBetweenFibers
-    simp
-    exact (cartesianLiftIsUnique (P:=P.1.hom) (idCartLift) (𝟙 _ ° X)).choose
-
 
 
   have full : Full E := by
@@ -124,15 +99,16 @@ theorem equivOnFibers : IsEquivalence E := by
 
 
           have tdiff : P.1.hom.obj ((X.1).left.obj u) = P.1.hom.obj ((Y.1).left.obj u) := by rw [← comm X] ; exact (symm t2)
-          --have this1 : eqToHom t1 ≫ u.hom = f1 := by sorry
-          have veryweird : (X.1.left ⋙ P.1.hom).map morph = (X.1.left ≫  P.1.hom).map morph := rfl
+
           have help :eqToHom tdiff ≫ eqToHom t2 ≫ u.hom = (P.1).hom.map ((X.1).left.map morph) ≫ eqToHom (by rw [← comm X] ; rfl) := by
-            rw [← Category.assoc] ; rw [← Functor.comp_map , veryweird , Functor.congr_hom (Over.w X.1 : X.1.left ⋙ P.1.hom = _) morph , eqToHom_trans , Category.assoc , Category.assoc , eqToHom_trans]
-            aesop
+            rw [← Category.assoc] ;
+            rw [rwFuncComp X morph ,eqToHom_trans]
+            rfl
+
 
           let f2 := P.1.hom.map (Y.1.left.map morph) ≫  eqToHom p2
-          let lX : cartesianLiftOfAlong (X') (eqToHom tdiff ≫ eqToHom t2  ≫ u.hom) :=  cartesianMorphismToCartLift (help) isCart1
-          let lY : cartesianLiftOfAlong (Y') (eqToHom t2 ≫ u.hom)  := cartesianMorphismToCartLift (by sorry) isCart2
+          let lX : cartesianLiftOfAlong (X') (eqToHom tdiff ≫ eqToHom t2  ≫ u.hom) :=  cartesianMorphismToCartLift'' (help) isCart1
+          let lY : cartesianLiftOfAlong (Y') (eqToHom t2 ≫ u.hom)  := cartesianMorphismToCartLift'' (by sorry) isCart2
 
 
           let myMap : over_hom (eqToHom tdiff) lX.Y lY.Y  := by
@@ -144,6 +120,23 @@ theorem equivOnFibers : IsEquivalence E := by
       · sorry
 
     · sorry
+
+  have essSurj : EssSurj E := by
+    constructor
+    intro X
+    let F : fundamentalFibration.obj I ⥤c P := ⟨
+      OverMorphOnFibers X ,
+      by sorry
+      ⟩
+    use F
+    constructor
+    rw [E'_obj_obj]
+    unfold E_obj_obj
+    unfold toFunctorOnFibers
+    unfold objMappingBetweenFibers
+    simp
+    exact (cartesianLiftIsUnique (P:=P.1.hom) (idCartLift) (𝟙 _ ° X)).choose
+
 
 
 

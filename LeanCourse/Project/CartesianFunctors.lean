@@ -24,7 +24,10 @@ notation (priority := high) P "[" A "]" => obj_over (P:=P.1.hom) A
 
 variable {P Q : fibration B}(F : P ⟶ Q)
 lemma comm  : ∀ {A} , P.1.hom.obj A =  Q.1.hom.obj (F.1.left.obj A) :=  fun {A} ↦ by rw [← Functor.comp_obj , ← Over.w F.1] ; apply Functor.congr_obj ; rfl
-
+lemma rwFuncComp  {M N  : P.1.left} (morph : M ⟶ N):
+  (Q.1).hom.map ((F.1).left.map morph) ≫ eqToHom (by rw [← comm F]) = eqToHom (by rw [comm F] ) ≫ P.1.hom.map morph := by
+          have veryweird : (F.1.left ⋙ Q.1.hom).map morph = (F.1.left ≫  Q.1.hom).map morph := rfl
+          rw [← Functor.comp_map ,veryweird , Functor.congr_hom (Over.w F.1 : F.1.left ⋙ Q.1.hom = _) morph , Category.assoc ,Category.assoc , eqToHom_trans , eqToHom_refl , Category.comp_id ]
 -- lemma over_comp_coe
 
 lemma verticalIsosAreCart' {P : fibration B} {X Y : P [I]} (f : Y ≅ X) : isCartesian ⟨ Y ,  coercBack f.hom ⟩ := by
@@ -116,7 +119,7 @@ def CartTrafoOfComp {P Q : fibration B} {F G : P ⟶ Q} (η : F.1.left ≅ G.1.l
         (Iso.mk (rewrittenTrafo η.hom T) (rewrittenTrafo η.inv T)) (ηhomIsVertical T)
     hom_inv_id := by apply Subtype.ext ; exact η.hom_inv_id
     inv_hom_id := by apply Subtype.ext ; exact η.inv_hom_id
-lemma verticalIsosAreCart'' {P : fibration B} {X Y : P [I]} (f : Y.1 ≅ X.1) (hf :isVertical f.hom) : isCartesianMorphism P.1 f.hom := by
+lemma verticalIsosAreCart'' {P : fibration B} (Y X : P [I]) (f : Y.1 ≅ X.1) (hf :isVertical f.hom) : isCartesianMorphism P.1 f.hom := by
   let g : Y ≅ X := Iso.mk (⟨ f.hom , hf⟩ : Y ⟶ X) (⟨ f.inv , isVertical_symm f hf⟩ : X ⟶ Y) (by apply Subtype.ext ; apply Iso.hom_inv_id) (by apply Subtype.ext ; aesop)
   have this : isCartesianMorphism P.1 g.hom.1 := verticalIsosAreCart (I:=I) (P:=P) g
   have goal : f.hom = g.hom.1  := by rfl
@@ -124,26 +127,71 @@ lemma verticalIsosAreCart'' {P : fibration B} {X Y : P [I]} (f : Y.1 ≅ X.1) (h
   assumption
 
 @[simp] noncomputable def cartesianLiftFromFibration (P : fibration B) {J I} (u : J ⟶ I) (X : P[I]) : cartesianLiftOfAlong X u := ⟨(P.2 u X).choose , (P.2 u X).choose_spec⟩
-def morphismToLift' {P : Over B} {J : B} {Y : obj_over J} {X: P.left} (φ : Y.1 ⟶ X) : liftOfAlong ⟨ X , rfl⟩  (eqToHom Y.2.symm ≫ P.hom.map φ) where
+def morphismToLift' {P : Over B} {J : B} (Y : obj_over J) {X: P.left} (φ : Y.1 ⟶ X)
+
+  {w : J ⟶ P.hom.obj X} (comm : w = eqToHom Y.2.symm ≫ P.hom.map φ): liftOfAlong (P:=P.hom)  ⟨ X , rfl⟩ w :=
+transportLift (comm.symm) ⟨ Y , by use φ; rw [← Category.assoc,eqToHom_trans,eqToHom_refl,Category.comp_id,eqToHom_refl,Category.id_comp]⟩
+lemma exchangeLaw {C : Cat} {X Y Z W  V : C} {f : X ⟶ Y} {g : Y ⟶Z } {h : Z ⟶ V} {i : V ⟶ W} :
+  f ≫ (g ≫ h) ≫ i = (f ≫ g)  ≫ (h ≫ i) := by
+  rw [Category.assoc , Category.assoc]
+def cartesianMorphismToCartLiftGeneral {P : Over B} {I J : B} {X : obj_over I} (Y : obj_over J) {φ : Y.1 ⟶ X.1} (hφ : isCartesianMorphism  P φ)
+  {u : J ⟶ I} (comm : u = eqToHom Y.2.symm ≫ P.hom.map φ ≫ eqToHom X.2) : cartesianLiftOfAlong (P:=P.hom) X u  where
   Y := Y
-  φ := by use φ; simp
+  φ := ⟨ φ  , by rw [comm,← Category.assoc,eqToHom_trans,eqToHom_refl, Category.id_comp] ⟩
+  isCart := by
+
+    intro K v L
+    let X' : obj_over (P.hom.obj X.1) := ⟨X.1 , rfl⟩
+    let Y' : obj_over (P.hom.obj Y.1) := ⟨Y.1 , rfl⟩
+    let ident := eqToHom X.2.symm
+    let comp : over_hom ident  X X':= by use 𝟙 X.1 ; aesop
+    let compY :over_hom (eqToHom Y.2) Y' Y := by use 𝟙 Y.1 ; aesop
+    let L' : liftOfAlong X' ((v ≫ eqToHom (_)) ≫ P.hom.map φ) := ⟨ _ , over_comp (by rw [Category.assoc,comm, Category.assoc ,exchangeLaw , eqToHom_trans,eqToHom_refl,Category.comp_id, Category.assoc]) comp L.φ⟩
+    obtain ⟨ ψ , hψ⟩  := hφ (v ≫ eqToHom ( Y.2.symm)) L'
+    let ψ' : over_hom v L'.Y Y := over_comp (by rw [Category.assoc,eqToHom_trans,eqToHom_refl,Category.comp_id]) compY ψ
+    use ψ'
+    have liftφCoinc : L'.φ.1 = L.φ.1 := by rw [over_comp_coe,Category.comp_id]
+    constructor ; swap
+    · intro y hy
+      apply Subtype.ext
+      let compYInv : over_hom (eqToHom Y.2.symm) Y Y' := by use 𝟙 Y.1 ; aesop
+      let y' : over_hom (v ≫ eqToHom Y.2.symm) L'.Y Y' := over_hom_comp compYInv y
+      have hy' : y'.1 ≫ φ = L'.φ.1 := by rw [over_hom_comp_coe , Category.comp_id , liftφCoinc , hy]
+
+      have : y' = ψ := by
+        apply hψ.2 y' hy'
+      calc
+      y.1 = y'.1 := by rw [over_hom_comp_coe, Category.comp_id]
+      _ = ψ.1 := congrArg (fun x ↦ x.1) this
+      _ = ψ'.1 := by rw [over_comp_coe, Category.comp_id]
+
+    · simp
+      have this : ψ.1 ≫ φ = _ := hψ.1
+      rw[this]
+      exact liftφCoinc
+
+
+def cartesianMorphismToCartLift {P : Over B} {J : B} {X : P.left} (Y : obj_over J) {φ : Y.1 ⟶ X} (hφ : isCartesianMorphism  P φ)
+  {w : J ⟶ P.hom.obj X} (comm : w = eqToHom Y.2.symm ≫ P.hom.map φ)
+  :
+   cartesianLiftOfAlong (P:=P.hom) ⟨ X , rfl⟩ w := by apply cartesianMorphismToCartLiftGeneral (P:=P) (X:=⟨ X , rfl⟩ ) Y hφ ; rw [comm,eqToHom_refl,Category.comp_id] ;
+
 
 
 def cartesianMorphismToCartLift' {P : Over B }{ X Y : P.1}  {φ : Y ⟶ X} (hφ : isCartesianMorphism  P φ) :
-  cartesianLiftOfAlong ⟨ X , rfl⟩  (P.hom.map φ ) where
-  Y := ⟨ Y , rfl⟩
-  φ := ⟨ φ  , by aesop⟩
-  isCart := by sorry --apply compPresCartesian -- sorry --hφ
-def cartesianMorphismToCartLift {P : Over B} {J : B} (Y : obj_over I) {φ : Y.1 ⟶ X} (hφ : isCartesianMorphism  P φ) : cartesianLiftOfAlong ⟨ X , rfl⟩ (eqToHom Y.2.symm ≫ P.hom.map φ) where
-  Y := Y
-  φ := ⟨ φ , by aesop⟩
-  isCart := by sorry
+  cartesianLiftOfAlong ⟨ X , rfl⟩  (P.hom.map φ ) := cartesianMorphismToCartLift ⟨ Y , rfl⟩ hφ (by rw [eqToHom_refl,Category.id_comp])
 
+
+def cartesianMorphismToCartLift'' {P : Over B } {I : B} {X : obj_over (P:=P.hom) I} { Y : P.1}  {φ : Y ⟶ X.1}
+  {v : P.hom.obj Y ⟶ I} (comm : v = (P.hom.map φ ≫ eqToHom X.2))
+(hφ : isCartesianMorphism  P φ) :
+  cartesianLiftOfAlong X v := by apply cartesianMorphismToCartLiftGeneral (P:=P) (Y:=⟨ Y , rfl⟩ ) hφ  ; rw [eqToHom_refl , Category.id_comp] ; exact comm
 
 lemma eq_whisker_eq {C : Cat} {X Y Z : C} {f f' : X ⟶ Y} {g g' : Y ⟶ Z} (p : f = f') ( q : g = g') : f ≫ g = f' ≫ g' := by
   rw [p]
   rw [q]
 lemma mapIso_preimageIso {C D : Cat} (F : C ⥤ D) [Full F] [Faithful F] {X Y : C} (f : F.obj X ≅ F.obj Y) : F.mapIso (F.preimageIso f) = f := by aesop
+
 theorem FullyFaithfullCartFunctorReflectsCartMorph ( full :  Full F.1.left) (faithful : Faithful F.1.left) :
   (∀ (Y X : P.1.left) (f : Y ⟶X) (hf : isCartesianMorphism Q.1 (F.1.left.map f)) , isCartesianMorphism P.1 f) := fun Y X f hf ↦ by
     let F':= F.1.left
@@ -155,63 +203,72 @@ theorem FullyFaithfullCartFunctorReflectsCartMorph ( full :  Full F.1.left) (fai
 
     let hFf: isCartesianMorphism Q.1 (F'.map L'.φ.1) := F.2 L'.φ.1 (cartLiftToCartMor L') --
 
-    --let hFf : isCartesianMorphism Q.1 (F'.map f) := F.2 f (cartLiftToCartMor L') --
-
-    let cartLift : cartesianLiftOfAlong (P:=Q.1.hom) ⟨ F'.obj X , rfl⟩   (Q.1.hom.map (F'.map L'.φ.1) )  :=
-        cartesianMorphismToCartLift' (P:=Q.1) hFf
-
     have EqObj : Q.1.hom.obj (F'.obj Y) = Q.1.hom.obj (F'.obj L'.Y.1) :=comm F ▸ (symm L'.Y.2).trans (comm F)
     let ident :=  eqToHom (EqObj)
-    have eqMor : Q.1.hom.map (F'.map f) = ident ≫ Q.1.hom.map (F'.map L'.φ.1) := by sorry
-    let cartComparMap : cartesianLiftOfAlong (P:=Q.1.hom) cartLift.Y  ident := cartesianLiftFromFibration Q  _ _
-    let cartCompos : cartesianLiftOfAlong ⟨F'.obj X , rfl⟩ (Q.1.hom.map (F'.map f)) := by
-      exact ⟨ _ , compPresCartesian' (P:=Q.1) cartLift cartComparMap (eqMor.symm) ⟩
+
+    have eqMor : Q.1.hom.map (F'.map f) = ident ≫ Q.1.hom.map (F'.map L'.φ.1) := by {
+        have rw := rwFuncComp F L'.φ.1
+        have rw' := rwFuncComp F f
+        apply (CategoryTheory.Iso.cancel_iso_hom_right _ _ (eqToIso ((comm F).symm))).1
+        rw [eqToIso.hom]
+
+        rw [rw',Category.assoc,rw]
+        rw [← Category.assoc , eqToHom_trans]
+        have this := L'.φ.2
+        have this := symm (eqToHom (EqObj.trans (comm F).symm) ≫= L'.φ.2)
+
+        rw [← Category.assoc,eqToHom_trans] at this
+        rw [this,← Category.assoc] ;
+        calc
+          _ ≫ eqToHom (rfl : P.1.hom.obj (⟨ X , rfl⟩ : obj_over (P:=P.1.hom) _).1 = (P.1).hom.obj X)
+          = _ := by aesop
+    }
+
+    let cartLift : cartesianLiftOfAlong (P:=Q.1.hom) ⟨ F'.obj X , rfl⟩   (Q.1.hom.map (F'.map f))  :=
+        cartesianMorphismToCartLift (P:=Q.1) ⟨ F'.obj L'.Y.1 , EqObj.symm ⟩ hFf eqMor
+
 
     let fAsLift : cartesianLiftOfAlong ⟨F'.obj X , rfl⟩ (Q.1.hom.map (F'.map f)) := cartesianMorphismToCartLift' hf
-    obtain ⟨ α , hα ⟩  := cartesianLiftIsUnique cartCompos fAsLift
-    --let preα
-    /-
-    have αisCart : isCartesianMorphism Q.1 α.hom.1 := by apply verticalIsosAreCart (P:=Q)
-    have hα : α.hom.1 ≫ cartCompos.φ.1 = fAsLift.φ.1 := hα.1
-    -/
-    have this : cartCompos.Y.1 = F'.obj L'.Y := by
-        trans cartComparMap.Y.1
-        · rfl
-        ·
+    obtain ⟨ α , hα ⟩  := cartesianLiftIsUnique cartLift fAsLift
     let myIso : Y ≅ L'.Y := by
       apply Functor.preimageIso F' ;
-      exact  (FiberToTotalSpace.mapIso α).trans (eqToIso this)
-    have hmyIso: F'.map myIso.hom = α.hom.1 ≫ eqToHom this := by calc
+      exact  FiberToTotalSpace.mapIso α
+    have hmyIso: F'.map myIso.hom = α.hom.1 := by calc
       F'.map myIso.hom = (F'.mapIso myIso).hom := by rw [← F'.mapIso_hom]
-      _ = ((FiberToTotalSpace.mapIso α).trans (eqToIso this)).hom := by congr ; apply mapIso_preimageIso F'
-      _ = FiberToTotalSpace.map α.hom ≫ eqToHom this := by rfl
+      _ = ((FiberToTotalSpace.mapIso α)).hom := by rw [mapIso_preimageIso F']
+      _ = FiberToTotalSpace.map α.hom := by rfl
 
 
 
-    have : isCartesianMorphism P.1 myIso.hom := by sorry
+    have this : isCartesianMorphism P.1 myIso.hom := by
+      apply verticalIsosAreCart'' (P:=P) ⟨ Y , rfl ⟩ L'.Y myIso
+      unfold isVertical
+
+      have l := rwFuncComp F myIso.hom
+      have l := l =≫ eqToHom (comm F)
+      have t := α.hom.2
+      unfold isVertical at t
+      have h : Q.1.hom.map α.hom.1 = eqToHom (EqObj) := by calc
+        _ = (Q.1.hom.map α.hom.1 ≫ eqToHom EqObj.symm) ≫ eqToHom (EqObj) := by rw[Category.assoc , eqToHom_trans,eqToHom_refl, Category.comp_id]
+        _ = eqToHom (by rfl)≫ eqToHom (EqObj) := by apply (· =≫_) ; exact α.hom.2
+        _ = eqToHom (EqObj) := by rw [eqToHom_refl,Category.id_comp]
+      rw [hmyIso, h ,  eqToHom_trans, Category.assoc] at l
+      have l := symm (swapPaths l)
+      rw [Category.assoc , eqToHom_trans, eqToHom_refl, Category.comp_id] at l
+      rw [l]
+      rw [eqToHom_trans, eqToHom_trans]
+
     have hf : f = myIso.hom ≫ L'.φ.1 := by
       apply F'.map_injective ;
       rw [Functor.map_comp] ;
       trans fAsLift.φ.1
       · rfl
       · rw [← hα.1] ;
+        symm
         apply eq_whisker_eq hmyIso
-        sorry
+        rfl
 
     rw [hf]
     apply compCartesianMorphisms
     exact this
     exact cartLiftToCartMor L'
-
-
-    /-
-
-
-
-    Remark
-    The problem why this is very difficult for me is the following: I have to cartesianLifts along maps which coincide up to an identification of the source.
-    Hence I cant directly apply that cartesianLiftsAre unique to conclude, that the two lifts coincide up to canonical isomorphism in the source.
-    So I have to composewith a cartesian lift along the identification. But now its hard to deduce the isomorphism between the correct sources.
-    And even after that, we will have to show that isomorphism are cartesian to conclude.
-
-      -/

@@ -65,12 +65,10 @@ def replaceTargetOfFiberMap' {X Y : (Sp.obj P).1.1.left} (f : Y ⟶ X) :
   fiberMap f ≫ X.unop.2.unop.1.left.map (Over.homMk f.unop.1.unop)
 
 
-lemma exchangeLaw {C : Cat} {X Y Z W  V : C} {f : X ⟶ Y} {g : Y ⟶Z } {h : Z ⟶ V} {i : V ⟶ W} :
-  f ≫ (g ≫ h) ≫ i = (f ≫ g)  ≫ (h ≫ i) := by
-  rw [Category.assoc , Category.assoc]
+
 
 lemma compCartTransExt {P Q : fibration B} {F G H:  P ⟶ Q} (η: F ⟶ G) (ε : G ⟶ H) : (η ≫ ε).1 = η.1 ≫ ε.1 := rfl
-/-
+
 lemma E_functor_map_comp  {X' Y' Z' : (Sp.obj P).1.1.left} (g : Z' ⟶Y') (f : Y' ⟶ X') : E_functor_map (g ≫ f) = E_functor_map g ≫ E_functor_map f := by
 
     let X:= X'.unop.2.unop
@@ -240,7 +238,7 @@ def E (P : fibration B) : Sp.obj P ⥤c P := by
 
 
   · apply  X.2
-    apply automaticallyCart (domainIsDiscrete I) -- (Over.homMk φ.unop.base.unop)
+    apply automaticallyCart -- (Over.homMk φ.unop.base.unop)
     --have test : isCartesianMorphism fib.1 morph :=automaticallyCart isDisc motph
     --exact test
 

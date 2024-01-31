@@ -19,7 +19,7 @@ universe v₁ u₁ --v₂ u₁ u₂
 
 
 namespace FiberedCategories
-
+local notation (priority := high) P "[" A "]" => obj_over (P:=P.1.hom) A
 variable {B : Cat.{v₁ , u₁}} {I J K : B}
 def split {P : fibration B} (c : Cleavage P) : Prop :=
   ∀ {I} (X : P[I]) , isIdentity (Y:=X.1) (Cart (𝟙 I) X)  ∧

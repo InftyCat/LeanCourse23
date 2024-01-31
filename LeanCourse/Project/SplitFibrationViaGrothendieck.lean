@@ -171,7 +171,7 @@ def Grothendieck : PShCat B ⥤ splitFibration B where
   map_id := by sorry
 def fiberComparisonFunctorObj {P : PShCat B} {I : Bᵒᵖ } (X : P.obj I) : (Grothendieck_obj P) ↓ I.unop :=  ⟨ ⟨ I , Opposite.op X⟩  , rfl⟩
 def fiberComparisonFunctor_map_fib {P : PShCat B} {I : Bᵒᵖ }  {X Y : P.obj I} (f : X ⟶ Y) :
-  (fiberComparisonFunctorObj X).1.unop.fiber.unop ⟶ (((P ⋙ opFunctor).map (𝟙 I)).obj (fiberComparisonFunctorObj Y).1.unop.fiber).unop := eqToHom (by rfl) ≫ f ≫ eqToHom (by rw [Functor.map_id] ;rfl)
+  (fiberComparisonFunctorObj X).1.unop.fiber.unop ⟶ (((P ⋙ opFunctor).map (𝟙 I)).obj (fiberComparisonFunctorObj Y).1.unop.fiber).unop := f ≫ eqToHom (by rw [Functor.map_id] ;rfl)
 @[simps] def fiberComparisonFunctor (P : PShCat B) (I : Bᵒᵖ ) : P.obj I ⥤ (Grothendieck_obj P) ↓ I.unop where --≌
   obj := fun X ↦ fiberComparisonFunctorObj X
   map := fun f ↦ by exact ⟨ ⟨ 𝟙 I , Opposite.op (fiberComparisonFunctor_map_fib f)⟩  , by aesop ⟩

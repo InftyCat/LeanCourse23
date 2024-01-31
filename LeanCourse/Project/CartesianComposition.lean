@@ -106,3 +106,11 @@ lemma compCartesianMorphisms  {X Y Z : P.left} {f : X ⟶ Y} {g : Y ⟶ Z}
     rw [this]
     let goal : isCartesian ⟨ lf.Y , oc⟩  := compPresCartesian' (P:=P) ⟨ _ , isCg⟩ ⟨ _ ,isCf⟩  path
     assumption
+lemma swapPaths {C : Cat} {X X' Y Y' : C} {s : X = X'} {t : Y = Y'} {f : X ⟶ Y} {f' : X' ⟶ Y'} (this : f ≫ eqToHom t = eqToHom s ≫ f') :
+  eqToHom (s.symm) ≫ f = f' ≫ eqToHom (t.symm) := by calc
+    eqToHom s.symm ≫ f =
+    eqToHom (s.symm) ≫ (f ≫  eqToHom (t)) ≫ eqToHom (symm t) := by symm ; rw [Category.assoc] ; apply (_≫=· ) ; rw [eqToHom_trans, eqToHom_refl, Category.comp_id]
+    _ = eqToHom (s.symm) ≫ (eqToHom (s) ≫ f') ≫ eqToHom (symm t)  := by rw [this]
+    _ = (eqToHom (s.symm) ≫ eqToHom (s) ≫ f') ≫ eqToHom (symm t)  := by rw [← Category.assoc]
+     _ = ((eqToHom (s.symm) ≫ eqToHom (s)) ≫ f') ≫ eqToHom (symm t)  := by apply (· =≫_ ) ; rw [← Category.assoc]
+    _ = _ := by rw [eqToHom_trans , eqToHom_refl , Category.id_comp]

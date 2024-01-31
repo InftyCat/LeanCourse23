@@ -80,6 +80,13 @@ def Ov (I : B) : Cat := ⟨  Over I , commaCategory  ⟩
 /-
 .rec  (by ext ; sorry)
 -/
+
+/-
+this : (↑u').left ≫ eqToHom (_ : (domainOver A).hom.obj ↑v = I) = eqToHom (_ : (domainOver A).hom.obj ↑w = J) ≫ u
+have pregoal : eqToHom (_ : J = (domainOver A).hom.obj w.1) ≫ (u'.1).left =
+  u ≫ eqToHom (_ : I = (domainOver A).hom.obj v.1) := by calc
+
+-/
 lemma OverMorExt  {X Y : (domainOver A).left} {f g : X ⟶ Y} (p : (domainOver A).hom.map f = (domainOver A).hom.map g) : f = g := by apply Over.OverMorphism.ext ; exact p
 
 lemma domainIsDiscrete (A : B) : isDiscreteOverB (domainOver A) := fun {J I} u v ↦ by
@@ -89,14 +96,7 @@ lemma domainIsDiscrete (A : B) : isDiscreteOverB (domainOver A) := fun {J I} u v
   obtain ⟨ w , u'⟩ := L
   have this := u'.2
   simp at this
-  have pregoal : eqToHom (_ : J = (domainOver A).hom.obj w.1) ≫ (u'.1).left =
-  u ≫ eqToHom (_ : I = (domainOver A).hom.obj v.1) := by calc
-    eqToHom (_ : J = (domainOver A).hom.obj w.1) ≫ (u'.1).left =
-    eqToHom (w.2.symm) ≫ ((u'.1).left ≫  eqToHom (v.2)) ≫ eqToHom (symm v.2) := by symm ; rw [Category.assoc] ; apply (_≫=· ) ; rw [eqToHom_trans, eqToHom_refl, Category.comp_id]
-    _ = eqToHom (w.2.symm) ≫ (eqToHom (w.2) ≫ u) ≫ eqToHom (symm v.2)  := by rw [this]
-    _ = (eqToHom (w.2.symm) ≫ eqToHom (w.2) ≫ u) ≫ eqToHom (symm v.2)  := by rw [← Category.assoc]
-     _ = ((eqToHom (w.2.symm) ≫ eqToHom (w.2)) ≫ u) ≫ eqToHom (symm v.2)  := by apply (· =≫_ ) ; rw [← Category.assoc]
-    _ = _ := by rw [eqToHom_trans , eqToHom_refl , Category.id_comp]
+
   apply liftOfAlong_ext ; swap
   --apply Subtype.ext
 
@@ -106,7 +106,7 @@ lemma domainIsDiscrete (A : B) : isDiscreteOverB (domainOver A) := fun {J I} u v
   have goal : u ≫ eqToHom (v.2.symm) ≫ v.1.hom = eqToHom (w.2.symm) ≫  w.1.hom := by
     rw [← u1]
     symm ;
-    rw [← Category.assoc, pregoal, Category.assoc]
+    rw [← Category.assoc, swapPaths this, Category.assoc]
 
   --have path : w.1.hom = (domainLift u v).Y.1.hom := by simp ; congr ; sorry
   have goal1 : Over.mk (u ≫ eqToHom (_ : I = (domainOver A).hom.obj v.1) ≫v.1.hom) = w.1 := by
@@ -121,11 +121,11 @@ lemma domainIsDiscrete (A : B) : isDiscreteOverB (domainOver A) := fun {J I} u v
   exact goal1
  -- sorry
   --Try to use my own lift_ext
-  rw [over_comp_coe]
+
   apply OverMorExt
   rw [Functor.map_comp, eqToHom_map]
   simp
-  exact pregoal.symm
+  exact (swapPaths this).symm
 
 
 @[simp] def fundamentalFibrationObj (A : B) : fibration B := ⟨ domainOver A , discreteIsCartesian (domainIsDiscrete A)⟩
