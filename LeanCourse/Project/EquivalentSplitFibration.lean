@@ -68,6 +68,15 @@ def replaceTargetOfFiberMap' {X Y : (Sp.obj P).1.1.left} (f : Y ⟶ X) :
 
 
 lemma compCartTransExt {P Q : fibration B} {F G H:  P ⟶ Q} (η: F ⟶ G) (ε : G ⟶ H) : (η ≫ ε).1 = η.1 ≫ ε.1 := rfl
+@[simp] def toFiberIso {P : fibration B} {X Y : P[I]} (f : X.1 ≅ Y.1) (isVert : isVertical f.hom) : X ≅ Y where
+  hom := (⟨ f.hom , isVert⟩)
+  inv := by
+    use f.inv ; unfold isVertical; unfold isVertical at isVert ;
+    rw [← Functor.mapIso_hom P.1.hom f] at isVert ;
+    exact ((Iso.eq_inv_comp (P.1.hom.mapIso f)).2 isVert).symm
+  hom_inv_id := ( by apply Subtype.ext ; exact f.hom_inv_id )
+  inv_hom_id := ( by apply Subtype.ext ; exact f.inv_hom_id )
+
 
 lemma E_functor_map_comp  {X' Y' Z' : (Sp.obj P).1.1.left} (g : Z' ⟶Y') (f : Y' ⟶ X') : E_functor_map (g ≫ f) = E_functor_map g ≫ E_functor_map f := by
 
@@ -177,20 +186,16 @@ lemma E_functor_map_comp  {X' Y' Z' : (Sp.obj P).1.1.left} (g : Z' ⟶Y') (f : Y
     simp
 
 
--/
+
 
 def E_functor : (Sp.obj P).1.1.left ⥤ P.1.left where
   obj := fun X ↦ ((E'_obj).obj X.unop.fiber.unop).1
   map :=  E_functor_map
 
-  map_comp := by sorry --E_functor_map_comp
+  map_comp := E_functor_map_comp
   map_id := by sorry
 lemma E_functor_IsOverB :  E_functor ⋙ P.1.hom = (Sp.obj P).1.1.hom  := by sorry
-@[simp] def toFiberIso {P : fibration B} {X Y : P[I]} (f : X.1 ≅ Y.1) (isVert : isVertical f.hom) : X ≅ Y where
-  hom := (⟨ f.hom , isVert⟩)
-  inv := (by sorry)
-  hom_inv_id := ( by sorry )
-  inv_hom_id := ( by sorry)
+
 lemma anyPathIsAutomaticallyVertical {P : fibration B} {I : B} {X : P[I]} {Y : P.1.left} (p : X.1 = Y)  :
   isVertical (eqToHom p : X.1 ⟶ (⟨ Y , (congrArg (P.1.hom.obj) (symm p)).trans X.2⟩ : obj_over I).1) := by aesop_cat
 def E (P : fibration B) : Sp.obj P ⥤c P := by

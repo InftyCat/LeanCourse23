@@ -33,7 +33,7 @@ def isSingletonImpIsProp {X : Type _} (s : isSingleton X) (y y' : X) :  y = y' :
 def isDiscreteOverB (P : Over B) : Prop := ∀ {J I} (u : J ⟶ I ) (X : obj_over (P:=P.hom) I),
  isSingleton (liftOfAlong X u )
 def uniqueLiftFromDiscreteness {P : Over B} (q : isDiscreteOverB P)
-  {J I} {u : J⟶ I} {X : obj_over (P:=P.hom) I} {r s : liftOfAlong X u} : r = s := isSingletonImpIsProp (q u X) r s
+  {J I : B} {u : J⟶ I} {X : obj_over (P:=P.hom) I} {r s : liftOfAlong X u} : r = s := isSingletonImpIsProp (q u X) r s
 lemma discreteIsCartesian  {P : Over B} (disc : isDiscreteOverB P) : isFibration P := fun {J I} u X ↦ by
 
   let φ : liftOfAlong X u  := (disc u X).choose

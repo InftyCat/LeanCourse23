@@ -12,12 +12,17 @@ universe v₁ u₁ --v₂ u₁ u₂
 -- morphism levels before object levels. See note [CategoryTheory universes].
 variable {B : Cat.{v₁, u₁}}
 namespace FiberedCategories
-def whiskerLeft {P Q R : fibration B} (F : P ⥤c Q)
+def und {P Q : fibration B} {F G : P ⟶ Q} (η : F ⟶ G) : F.1.1 ⟶ G.1.1 := η.1
+@[simp] def whiskerLeft {P Q R : fibration B} (F : P ⥤c Q)
 {G H : Q ⥤c R} (η : G =>c H) : ((F ≫ G) =>c (F ≫ H)) := ⟨ Bicategory.whiskerLeft F.1.1 η.1 ,  fun {A} T ↦ by sorry⟩
-
+@[simp] def whiskerRight {P Q R : fibration B} {G H : P ⥤c Q}   (η : G =>c H) (F : Q ⥤c R)
+: ((G ≫ F) ⟶ (H ≫ F)) := ⟨ Bicategory.whiskerRight η.1 F.1.1  ,  fun {A} T ↦ by
+  unfold rewrittenTrafo
+  rw [eqToHom_refl,eqToHom_refl, Category.id_comp,Category.comp_id]
+  η.2 (( F / A).obj (T))⟩
 instance : Bicategory (fibration B) where
   whiskerLeft := whiskerLeft
-  whiskerRight := by sorry
+  whiskerRight := fun η F ↦ whiskerRight η F
   associator := by sorry
   leftUnitor := by sorry
   rightUnitor := by sorry
@@ -40,11 +45,17 @@ class isEquivalenceInBicategory {C : Type u₁ } [Bicategory C] {P Q  : C}  (F :
   unitIso : 𝟙 P ≅ F ≫ inverse
   /-- Composition `inverse ⋙ F` is isomorphic to the identity. -/
   counitIso : inverse ≫  F ≅ 𝟙 Q
-  /-
-  /-- The natural isomorphisms are inverse. -/
-  functor_unitIso_comp :
-    ∀ X : C,
-      F.map ((unitIso.hom : 𝟭 C ⟶ F ⋙ inverse).app X) ≫ counitIso.hom.app (F.obj X) =
-        𝟙 (F.obj X) := by
-    aesop_cat
--/
+--theorem strongAssoc {P Q RS : fibration B} {F : P ⟶ Q}{H : R ⟶ S} : (F ≫ G) ≫ H = F ≫ G ≫ H := by rw [Category.assoc]
+open Bicategory
+
+theorem strongAssoc {P Q R S : fibration B} {F : P ⟶ Q}{H : R ⟶ S} :
+  (postcomposing Q R S).obj H ⋙ (precomposing P Q S).obj F = (precomposing P Q R).obj F ⋙ (postcomposing P R S).obj H := by
+
+  apply Functor.ext ; swap
+
+  simp
+  intro X Y η
+  rw [eqToHom_refl,eqToHom_refl,Category.comp_id,Category.id_comp]
+  rw [Functor.comp_map,Functor.comp_map,]
+  apply Subtype.ext
+  rfl

@@ -41,6 +41,12 @@ def discreteFibration (B : Cat) := {P : fibration B //  isDiscreteOverB P.1}
 
 noncomputable instance {P : discreteFibration B} : Cleavage P.1 where
   Cart' :=  cartesianLiftFromFibration P.1
+lemma extInv {B : Cat} {P : Over B} {J I : B} {u : J ⟶ I} {X : obj_over (P:=P.hom) I} (l1 l2 : liftOfAlong X u) (myident : l1 = l2) :
+  ∃ p : l1.Y.1 = l2.Y.1 , eqToHom p ≫ l2.φ.1 = l1.φ.1 := by
+    subst myident
+    use rfl
+    rw [eqToHom_refl,Category.id_comp]
+
 
 lemma splitFromDiscrete {P : discreteFibration B} : split (P:=P.1) instCleavageValFibrationIsDiscreteOverBOverCatCategoryIsFibration :=
   by
@@ -59,29 +65,8 @@ lemma splitFromDiscrete {P : discreteFibration B} : split (P:=P.1) instCleavageV
     eqToHom p ≫ Cart (v ≫ u) X = Cart v (u * X) ≫ Cart u X
     -/
     intro J K u v
-    have myident : transLift (Cleavage.Cart' u X).1 (Cleavage.Cart' v (u * X)).1 = (Cleavage.Cart' (v ≫ u) X).1
-      :=  uniqueLiftFromDiscreteness P.2
-
-    let p : (v * u * X).1 = ((v ≫u ) * X).1 := by
-      calc
-      (v * u * X).1 =  (transLift (Cleavage.Cart' u X).1 (Cleavage.Cart' v (u * X)).1).Y := by rfl
-       _ = (Cleavage.Cart' (v ≫ u) X).1.Y := by rw [myident]
-       _ = ((v ≫u ) * X).1 := rfl
-    use p
-
-    -- have goal : isIdentity (↑) := by apply isWeakDisc
-
-    sorry --
-
-  /-
-
-  def split {P : fibration B} (c : Cleavage P) : Prop :=
-  ∀ {I} (X : P[I]) , isIdentity (Y:=X.1) (Cart (𝟙 I) X)  ∧
-  ∀ {I J K} (u : J ⟶ I) (v : K ⟶ J) (X : P[I]) , ∃ p : (v * u * X).1 = ((v ≫ u) * X).1 ,
-    eqToHom p ≫ Cart (v ≫ u) X = Cart v (u * X) ≫ Cart u X
-  -/
-
-
+    apply extInv (transLift (Cleavage.Cart' u X).1 (Cleavage.Cart' v (u * X)).1) ((Cleavage.Cart' (v ≫ u) X).1)
+    exact uniqueLiftFromDiscreteness P.2
 
 def Fib (B : Cat) : Cat :=Bundled.of (fibration B)
 @[simps] def yoObj {B : Cat.{v₁,u₁ }} (P : fibration B) : (Fib B) ᵒᵖ ⥤ Cat where
@@ -98,7 +83,7 @@ def Fib (B : Cat) : Cat :=Bundled.of (fibration B)
 
 @[simps] def yo  {B : Cat.{v₁,u₁ }} : Fib B ⥤ PShCat (Fib B) where
   obj := yoObj
-  map := fun f ↦ ⟨ fun X ↦  (Bicategory.postcomposing _ _ _).obj f ,  by sorry ⟩
+  map := fun f ↦ ⟨ fun X ↦  (Bicategory.postcomposing _ _ _).obj f ,  by intro Y Z g ; apply strongAssoc  ⟩
   map_id := fun X ↦ sorry
   map_comp := by sorry
 def U (P : splitFibration B) : fibration B := P.1
@@ -114,19 +99,7 @@ variable {P : fibration B}
   := ⟨ rewrittenTrafo f.1 ⟨ Over.mk (𝟙 I ) , rfl ⟩ , by apply f.2⟩
 @[simp] lemma cartesianIdTrans' {A : B} {T : obj_over A} (F : P ⥤c Q) : rewrittenTrafo (𝟙 F.1.1) T = 𝟙 ((F / A).obj T).1 := by simp ; aesop
 @[simp] lemma idCartFunctor {P Q : fibration B} (F : P ⟶ Q) : ∀ X,  ((𝟙 F : F =>c F).1).app X = 𝟙 (F.1.left.obj X) := fun X ↦ rfl
-/-
-  --def isVertical {X X' : obj_over (P:=P) A} (α : X.1 ⟶ X') := P.map α ≫ CategoryTheory.eqToHom X'.2  = CategoryTheory.eqToHom X.2
-  @[simp] def compCartTrans {F G H: P ⥤c Q} (η: F =>c G) (ε : G =>c H) : F =>c H := ⟨
-     η.1 ≫ ε.1  ,
-    fun T ↦ by
-      have toProve : rewrittenTrafo (η.1 ≫ ε.1) T = rewrittenTrafo η.1 T ≫ rewrittenTrafo ε.1 T := by simp ; aesop
-      rw [toProve]
-      apply compPresVertical
-      exact η.2 T
-      exact ε.2 T
 
-    ⟩
--/
 def E_obj_map_id {I : B} (X : (fundamentalFibration.obj I ⟶ P)) :
   E_obj_map (𝟙 X) = 𝟙 (E_obj_obj X) := by
   apply Subtype.ext ; rw [E_obj_map]
