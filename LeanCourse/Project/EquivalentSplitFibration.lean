@@ -37,9 +37,7 @@ namespace FiberedCategories
 variable {B : Cat.{v₁ , v₁}} {I J K : B}
 variable {P : fibration B}
 
-/-
-lemma SpP {I : B} : (Sp.obj P) ↓ I ≅ Bundled.of (fundamentalFibration.obj I ⟶ P) := by sorry
--/
+
 open Over
 lemma someOverExt {I J : Bᵒᵖ} {u : I ⟶ J} : (Over.map u.unop).obj (Over.mk (𝟙 J.unop)) = Over.mk u.unop := by
   trans Over.mk (𝟙 J.unop ≫ u.unop)
@@ -263,7 +261,7 @@ lemma helpLemma3 (f : X ⟶ Y): myFiberMapFiberUnop f ≫ eqToHom (helpPath) = f
         _ = f ≫ 𝟙 _  := by apply (_≫=·) ; rw [eqToHom_refl]
         _ = _ := by rw [Category.comp_id]
 
-        --· sorry
+
 lemma firstPartOfProof (f : X ⟶ Y) : ((myFiberMap f).1.unop.fiber.unop.1.app (Over.mk (𝟙 _)) ≫ replaceTargetOfFiberMap' ((myFiberMap f).1)) ≫ Y.1.left.map (Over.homMk (𝟙 _))
         = eqToHom (congrArg FiberToTotalSpace.obj (TriangleOnFibersCommutesObj X)) ≫  rewrittenTrafo f.1 ⟨ Over.mk (𝟙 I ) , rfl ⟩ ≫ eqToHom (congrArg FiberToTotalSpace.obj (symm (TriangleOnFibersCommutesObj Y)))  := by
         have helpLemma3' : ∀ u , (myFiberMapFiberUnop f).1.app u ≫ eqToHom (_) = f.1.app u := fun u ↦ by symm ;  calc

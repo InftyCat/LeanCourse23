@@ -100,7 +100,7 @@ theorem Faithfulness : (∀ (I : B) ,  IsEquivalence (F / I) ) → (∀ Y X : P.
       have this : (morphismToLift (P:=Q.1.hom) Fφ).φ.1 = Fφ := rfl
 
       let f1 : over_hom (P:=Q.1.hom) (Q.1.hom.map (Fφ)) ⟨ F'.obj Y , p⟩  ⟨ F'.obj X , rfl⟩  := by
-        use f ; -- transport (by sorry) (mappingOverHom F ρ1)
+        use f ;
         have this := (mappingOverHom F ρ1).2
         have this' := (mappingOverHom F φ).2
         rw [eqToHom_refl,Category.comp_id]

@@ -46,17 +46,28 @@ def idCartLift {X : P [I]} : cartesianLiftOfAlong X (𝟙 _) := by
       rw [← Category.comp_id φ.1]
       rw [hφ]
       rfl
-
-@[simps] noncomputable def functorOnFibers (X : P [I]) : (fundamentalFibration.obj I).1.left ⥤ P.1.left where
+noncomputable def functorOnFibers_map' {X : P [I]} {uv u : ((fundamentalFibration.obj I).1).left.1} (v : uv ⟶ u) :  over_hom v.left ((v.left ≫ u.hom) ° X).Y (u.hom ° X).Y :=
+  ((u.hom ° X).2 _ _).choose
+noncomputable def compar {uv u : ((fundamentalFibration.obj I).1).left.1}  {X : P [I]} (v : uv ⟶ u) : ((uv.hom) ° X).Y.1 ⟶ ((v.left ≫ u.hom) ° X).Y.1 := eqToHom ((by rw [Over.w v]))
+noncomputable def functorOnFibers_map {X : P [I]} {uv u : ((fundamentalFibration.obj I).1).left.1} (v : uv ⟶ u) :  (uv.hom ° X).Y.1 ⟶ (u.hom ° X).Y.1 :=
+  compar v ≫ (functorOnFibers_map' v).1
+noncomputable def functorOnFibers (X : P [I]) : (fundamentalFibration.obj I).1.left ⥤ P.1.left where
   obj := fun u  ↦ (u.hom ° X).Y.1
-  map := fun {uv u} v  ↦ by
+  map := functorOnFibers_map
+  map_id := by
+    intro u ;
+    let uX := u.hom ° X
+    have th : (functorOnFibers_map' (𝟙 u)).1 ≫ (uX.φ.1)= ((𝟙 _ ≫ u.hom) ° X).φ.1 := (uX.2 (𝟙 _) ((𝟙 _ ≫ u.hom) ° X)).choose_spec.1
+    have p : ((𝟙 u.left ≫ u.hom)°X).toliftOfAlong.Y.1 = uX.Y.1 := by rw [Category.id_comp]
+    have th' : eqToHom p≫ (uX.φ.1)= ((𝟙 _ ≫ u.hom) ° X).φ.1 := by sorry
+    have q : ⟨ eqToHom p , by sorry⟩ = functorOnFibers_map' (𝟙 u)   :=
+      (uX.2 (𝟙 _) ((𝟙 _ ≫ u.hom) ° X)).choose_spec.2 ⟨ eqToHom p , by sorry⟩  th'
+    trans  eqToHom (by rw [Over.w (𝟙 _)]) ≫ (functorOnFibers_map' (𝟙 u)).1
+    · rfl
+    · rw [← congrArg (fun x ↦ x.1) q,eqToHom_trans,eqToHom_refl]
 
-    simp
-    have this : v.left ≫ u.hom = uv.hom := Over.w v
-    rw [← this]
-    exact ((u.hom ° X).2 _ _).choose.1;
-  map_id := by sorry
-  map_comp := by sorry
+
+  map_comp := fun {uvw} {uv} {u} w v ↦ by sorry
 
 @[simps!] noncomputable def OverMorphOnFibers (X : P [I]) : (fundamentalFibration.obj I).1 ⟶ P.1 := by
   apply Over.homMk

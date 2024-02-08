@@ -17,6 +17,7 @@ def und {P Q : fibration B} {F G : P ⟶ Q} (η : F ⟶ G) : F.1.1 ⟶ G.1.1 := 
 {G H : Q ⥤c R} (η : G =>c H) : ((F ≫ G) =>c (F ≫ H)) := ⟨ CategoryTheory.whiskerLeft F.1.1 η.1 ,  fun {A} T ↦  η.2 (( F / A).obj (T))⟩
 @[simp] def whiskerRight {P Q R : fibration B} {G H : P ⥤c Q}   (η : G =>c H) (F : Q ⥤c R)
 : ((G ≫ F) ⟶ (H ≫ F)) := ⟨ CategoryTheory.whiskerRight η.1 F.1.1  ,  fun {A} T ↦ ((F / A).map ((trafoOnFibers η A).app T)).2⟩
+
 instance : Bicategory (fibration B) where
   whiskerLeft := whiskerLeft
   whiskerRight := fun η F ↦ whiskerRight η F
@@ -35,6 +36,7 @@ instance : Bicategory (fibration B) where
   whisker_exchange := by sorry
   pentagon  := by sorry
   triangle := by sorry
+
 class isEquivalenceInBicategory {C : Type u₁ } [Bicategory C] {P Q  : C}  (F : P ⟶ Q) where
   /-- The inverse functor to `F` -/
   inverse : Q ⟶ P
