@@ -74,11 +74,12 @@ def cartLiftToCartMor {P : fibration B } {J I : B} {u : J ⟶ I} {X : obj_over (
       have goal := eq_whisker L.φ.2 (eqToHom (symm X.2))
       rw [← Category.assoc , ←goal ]
       rw [Category.assoc , eqToHom_trans , eqToHom_refl]
-      sorry --aesop
+      aesop
 
-    have trick : (v' ≫ P.1.hom.map L.φ.1) ≫eqToHom X.2 = v ≫ u := by rw [trick] ; sorry
+
+    have trick : (v' ≫ P.1.hom.map L.φ.1) ≫eqToHom X.2 = v ≫ u := by rw [trick,Category.assoc] ; apply (_≫=·) ; rw [Category.assoc , eqToHom_trans,eqToHom_refl , Category.comp_id]
     -- let iX : over_hom ()
-    let μ : over_hom (v ≫ u) K.1 X := over_comp trick (⟨ 𝟙 _ , by sorry⟩ ) (K.φ)
+    let μ : over_hom (v ≫ u) K.1 X := over_comp trick (⟨ 𝟙 _ , by rw [Functor.map_id , Category.id_comp,eqToHom_trans]⟩ ) (K.φ)
 
     obtain ⟨ψ , hψ⟩   :=  L.2 _ ⟨  _ , μ⟩
     have p : (v' ≫ eqToHom Y.2) ≫ eqToHom (Y.2.symm) = v' := by calc
@@ -86,12 +87,35 @@ def cartLiftToCartMor {P : fibration B } {J I : B} {u : J ⟶ I} {X : obj_over (
       v' ≫ _ = v' ≫ (𝟙 _) := by apply (_≫= · ) ; rw [eqToHom_trans , eqToHom_refl]
       _ = v' := by rw [Category.comp_id v' ]
 
-    let ψ' : over_hom v' K.Y Y' := over_comp p (⟨ 𝟙 _ , by sorry⟩ ) ψ
+    let compOverHom : over_hom (eqToHom L.Y.2.symm) Y Y' := (⟨ 𝟙 _ , by rw [Functor.map_id , Category.id_comp,eqToHom_trans]⟩ )
+    let compOverHomInv : over_hom (eqToHom L.Y.2) Y' Y := (⟨ 𝟙 _ , by rw [Functor.map_id , Category.id_comp,eqToHom_trans]⟩ )
+    let ψ' : over_hom v' K.Y Y' := over_comp p compOverHom ψ
     use ψ'
     constructor
-    -- rw [over_comp_coe]
-    sorry
-    sorry
+
+    simp
+    rw [hψ.1,over_comp_coe,Category.comp_id]
+    intro y hy
+    let y' : over_hom v K.Y Y := over_hom_comp compOverHomInv y
+    have this : y' = ψ := by
+      refine hψ.2 y' ?_
+      simp
+      exact hy
+
+
+
+    apply Subtype.ext
+    rw [over_comp_coe p compOverHom ψ , ← this , over_hom_comp_coe,Category.assoc,Category.comp_id,Category.comp_id]
+
+
+
+
+
+
+
+
+
+
 lemma verticalIsosAreCart {P : fibration B} {X Y : P [I]} (f : Y ≅ X) : isCartesianMorphism P.1 (f.hom.1) := cartLiftToCartMor ⟨ _ , verticalIsosAreCart' f⟩
 lemma isVertical_symm {P : Over B} {X X' : obj_over (P:=P.hom) I} (α : X.1 ≅ X'.1) (isVert : isVertical α.hom ) : isVertical α.inv := by
   unfold isVertical ; symm ;

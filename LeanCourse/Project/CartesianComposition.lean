@@ -50,6 +50,11 @@ lemma liftOfAlong_ext  {I : B} {X : obj_over (P:=P.hom) I} {u : J ⟶ I} {L L' :
     rw [Category.id_comp] at hφ
     subst hφ
     rfl
+lemma extInv {B : Cat} {P : Over B} {J I : B} {u : J ⟶ I} {X : obj_over (P:=P.hom) I} (l1 l2 : liftOfAlong X u) (myident : l1 = l2) :
+  ∃ p : l1.Y.1 = l2.Y.1 , eqToHom p ≫ l2.φ.1 = l1.φ.1 := by
+    subst myident
+    use rfl
+    rw [eqToHom_refl,Category.id_comp]
 
 
 
@@ -102,7 +107,13 @@ lemma compCartesianMorphisms  {X Y Z : P.left} {f : X ⟶ Y} {g : Y ⟶ Z}
     let lf : liftOfAlong ⟨ Y , rfl⟩ _ := morphismToLift (P:=P.hom) f
     let path : _ = (P.hom.map (f ≫ g))  := by rw [Functor.map_comp]
     let oc : over_hom (P.hom.map (f ≫ g)) _ _:= over_comp path lg.φ lf.φ
-    have this : morphismToLift  (P:=P.hom) (f ≫ g) = ⟨ _ , oc ⟩  := by sorry
+    have this : morphismToLift  (P:=P.hom) (f ≫ g) = ⟨ _ , oc ⟩  := by
+      apply liftOfAlong_ext ; swap
+      · rfl
+      · rw [over_comp_coe] ;
+        simp
+
+
     rw [this]
     let goal : isCartesian ⟨ lf.Y , oc⟩  := compPresCartesian' (P:=P) ⟨ _ , isCg⟩ ⟨ _ ,isCf⟩  path
     assumption

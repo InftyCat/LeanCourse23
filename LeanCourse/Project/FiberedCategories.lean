@@ -57,7 +57,7 @@ instance : CoeDep (liftOfAlong (P:=P) X u) L (L.Y.1 ⟶ X) where
   coe := L.φ.1
 variable {J I : B} {u : J ⟶ I}
 
-def morphismToLift {X Y : 𝕏} (φ : Y ⟶ X) : liftOfAlong ⟨ X , rfl⟩  (P.map φ) where
+@[simps] def morphismToLift {X Y : 𝕏} (φ : Y ⟶ X) : liftOfAlong ⟨ X , rfl⟩  (P.map φ) where
   Y := ⟨ Y , rfl⟩
   φ := by use φ; simp
 
@@ -226,34 +226,22 @@ def toFunctorOnFibers (F : P ⥤c Q) (A : B) :
 
 scoped infixr:70 " / " => toFunctorOnFibers
 
-@[simp] lemma check {A : B} (F : P ⥤c Q) (X : obj_over A) : ((F / A).obj X).1 = F.1.left.obj X.1 := rfl
-
 
 @[simp] def rewrittenTrafo (η : F.1.left ⟶G ) {A : B} (T : obj_over (P:=P.1.hom) A) : ↑((F / A).obj T).1 ⟶ ↑((G / A).obj T).1 :=
- eqToHom (symm $ check F T)  ≫  (η.app T.1) ≫  eqToHom (check G _)
+ (η.app T.1  : ↑((F / A).obj T).1 ⟶ ↑((G / A).obj T).1)
 
 def cartesianNatTrans {P Q : fibration B}
   (F G : P ⥤c Q)
   := { η : F.1.left ⟶ G // ∀ {A : B} (T : obj_over (P :=P.1.hom) A) ,
-  isVertical (X:=(F / A).obj T) (X':=(G / A).obj T) (rewrittenTrafo η T) }
+  isVertical (X:=(F / A).obj T) (X':=(G / A).obj T) (η.app T.1  ) }
 
 scoped infixr:80 " =>c " => cartesianNatTrans
-@[simp] def cartesianIdTrans : (F : P ⥤c Q) →  F =>c F := fun F ↦ ⟨  𝟙 F.1.1 , fun {A} T ↦by
-  have this : rewrittenTrafo (𝟙 F.1.1) T = 𝟙 ((F / A).obj T).1 := by simp ; aesop
-  rw [this]
-  exact idIsVertical _
-   ⟩
+@[simp] def cartesianIdTrans : (F : P ⥤c Q) →  F =>c F := fun F ↦ ⟨  𝟙 F.1.1 , fun {A} T ↦ idIsVertical _⟩
+
 
   @[simp] def compCartTrans {F G H: P ⥤c Q} (η: F =>c G) (ε : G =>c H) : F =>c H := ⟨
      η.1 ≫ ε.1  ,
-    fun T ↦ by
-      have toProve : rewrittenTrafo (η.1 ≫ ε.1) T = rewrittenTrafo η.1 T ≫ rewrittenTrafo ε.1 T := by simp ; aesop
-      rw [toProve]
-      apply compPresVertical
-      exact η.2 T
-      exact ε.2 T
-
-    ⟩
+    fun T ↦ compPresVertical _ _ (η.2 T) (ε.2 T)⟩
 @[ext ,simp] lemma extCartTrafo {P Q : fibration B} {F G : P ⥤c Q} (η ε : F =>c G ) (p : η.1 = ε.1) : η = ε  := Subtype.ext p
 
 def trafoOnFibers (η : F =>c G) (A : B) : F / A ⟶ G / A where
@@ -268,9 +256,6 @@ def trafoOnFibers (η : F =>c G) (A : B) : F / A ⟶ G / A where
     calc
     ((F / A).map f ≫ ⟨ rewrittenTrafo η.1 Y , _⟩ ).1 = F.1.left.map f.1 ≫ rewrittenTrafo η.1 Y := by rfl
     _ = rewrittenTrafo η.1 X ≫ G.1.left.map f.1 := by
-      unfold rewrittenTrafo ;
-      rw [eqToHom_refl, eqToHom_refl,eqToHom_refl,eqToHom_refl] ;
-      rw [Category.comp_id,Category.comp_id, Category.id_comp,Category.id_comp,]
       exact nat
     _  =_ := by rfl
 instance : Category (fibration B) where

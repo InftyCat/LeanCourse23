@@ -41,18 +41,13 @@ def discreteFibration (B : Cat) := {P : fibration B //  isDiscreteOverB P.1}
 
 noncomputable instance {P : discreteFibration B} : Cleavage P.1 where
   Cart' :=  cartesianLiftFromFibration P.1
-lemma extInv {B : Cat} {P : Over B} {J I : B} {u : J ⟶ I} {X : obj_over (P:=P.hom) I} (l1 l2 : liftOfAlong X u) (myident : l1 = l2) :
-  ∃ p : l1.Y.1 = l2.Y.1 , eqToHom p ≫ l2.φ.1 = l1.φ.1 := by
-    subst myident
-    use rfl
-    rw [eqToHom_refl,Category.id_comp]
 
 
 lemma splitFromDiscrete {P : discreteFibration B} : split (P:=P.1) instCleavageValFibrationIsDiscreteOverBOverCatCategoryIsFibration :=
   by
     intro I X
     constructor
-    -- let f := by sorry (cartesianLiftFromFibration P (𝟙 _) X).1
+
     let lift := Cleavage.Cart' (𝟙 _) X
     have ez : (coerc lift.φ).1 = (Cleavage.Cart' (𝟙 _) X).φ.1 := rfl
     have goal : isIdentity ( (coerc lift.φ).1) := discImpWeakDisc P.2 (coerc lift.φ)
@@ -84,8 +79,8 @@ def Fib (B : Cat) : Cat :=Bundled.of (fibration B)
 @[simps] def yo  {B : Cat.{v₁,u₁ }} : Fib B ⥤ PShCat (Fib B) where
   obj := yoObj
   map := fun f ↦ ⟨ fun X ↦  (Bicategory.postcomposing _ _ _).obj f ,  by intro Y Z g ; apply strongAssoc  ⟩
-  map_id := fun X ↦ sorry
-  map_comp := by sorry
+  map_id := fun X ↦ by apply NatTrans.ext' ; ext ; aesop
+  map_comp := fun f g ↦ by apply NatTrans.ext' ; ext ; aesop
 def U (P : splitFibration B) : fibration B := P.1
 def psh {B : Cat} : (Fib B) ⥤ PShCat B := yo ⋙ (PSh_rest (fundamentalFibration (B:=B)))
 def Sp {B : Cat} : (Fib B) ⥤ splitFibration B := psh ⋙ Grothendieck
@@ -103,14 +98,13 @@ variable {P : fibration B}
 def E_obj_map_id {I : B} (X : (fundamentalFibration.obj I ⟶ P)) :
   E_obj_map (𝟙 X) = 𝟙 (E_obj_obj X) := by
   apply Subtype.ext ; rw [E_obj_map]
-  simp only [Functor.id_obj, Functor.const_obj_obj, E_obj_obj, check, rewrittenTrafo, eqToHom_refl,
-    isVertical, idCartFunctor, Category.comp_id, idInFib]
+  aesop
 
 -- def E_obj_map_comp
 @[simps] def E'_obj  {I : B} : (fundamentalFibration.obj I ⟶ P) ⥤ obj_over (P:=P.1.hom) I where
   obj := fun X ↦ E_obj_obj X
   map := fun f ↦ E_obj_map f
   map_id := fun X ↦ E_obj_map_id X
-  map_comp := sorry
+  map_comp := fun f g ↦ by apply Subtype.ext ; unfold E_obj_map ; aesop
 
 -- def E' : yo ⋙ (PSh_rest (fundamentalFibration (B:=B)))

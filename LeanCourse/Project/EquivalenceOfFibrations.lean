@@ -102,6 +102,80 @@ theorem Fullness {F : P ⟶ Q}: (∀ (I : B) ,  IsEquivalence (F / I) ) → (∀
 
 
 
+theorem Faithfulness : (∀ (I : B) ,  IsEquivalence (F / I) ) → (∀ Y X : P.1.left , Function.Injective (F.1.left.map : (Y ⟶ X) → (F.1.left.obj Y ⟶ F.1.left.obj X))) := by
+
+      intro ass
+      intro Y X
+
+      let F' := F.1.left
+      intro ρ ρ' hρ
+      let f := F'.map ρ
+      let u := Q.1.hom.map f
+      let I := Q.1.hom.obj (F'.obj X)
+      let J := Q.1.hom.obj (F'.obj Y)
+      let Xf : obj_over I := ⟨X , comm F⟩
+      let Yf : obj_over J := ⟨Y , comm F⟩
+      obtain ⟨⟨ Y' , φ⟩  , hφ⟩   := P.2 u Xf
+      have isCart : isCartesianMorphism P.1 φ.1 := cartLiftToCartMor ⟨_ , hφ⟩
+
+      have goal : isWeakCartesian (P:=Q.1.hom) (morphismToLift (F'.map φ.1)) := weakCartifCartesian ⟨_ , F.2 _ isCart⟩
+      have p : Q.1.hom.obj (F'.obj Y) = Q.1.hom.obj (F'.obj Y'.1) := by
+        calc
+              _ = P.1.hom.obj Y' := symm (Y'.2)
+             _ = _ := comm F
+
+      let Fφ : over_hom (P:=Q.1.hom) (((Q.1).hom.map (F'.map φ.1))) ⟨ F'.obj Y , p ⟩ ⟨ F'.obj X , rfl⟩  := by
+        use f
+        rw [← Functor.comp_map F' Q.1.hom φ.1]
+        have rwr : (F' ⋙ Q.1.hom).map φ.1 = _ := Functor.congr_hom (Over.w F.1) φ.1
+        rw [rwr]
+        rw [φ.2]
+        rw [←Category.assoc,eqToHom_trans]
+        rw [←Category.assoc,eqToHom_trans]
+        aesop
+
+      obtain ⟨ g , hg⟩  := goal ⟨ _ , Fφ⟩
+
+      let J' := Q.1.hom.obj (F'.obj Y'.1)
+      let Y1 : obj_over J' := ⟨ Y  , (comm F).trans p⟩
+      let Y1' : obj_over (P:=P.1.hom) J' := ⟨ Y'.1 , comm F⟩
+      have p1 : (F / J').obj  Y1 = ⟨ F'.obj Y ,p⟩ := rfl
+      have p2 : (F / J').obj Y1'  = ⟨F'.obj Y'.1 , rfl⟩ := rfl
+      let ρ1 : over_hom (eqToHom (by sorry) ≫ u) Y1 Xf := by sorry
+      let ν : Y1 ⟶ Y1' := (hφ  ⟨ _ , ρ1 ⟩  ).choose
+
+      /-
+      let pre_g  : Y1 ⟶ Y1' := (Equivalence.fullOfEquivalence (F / J')).preimage (eqToHom p1 ≫ g ≫ eqToHom (symm p2))  --: Yf ⟶ Y'
+      have pre_gh : F.1.left.map pre_g.1 = (eqToHom p1).1 ≫ g.1 ≫ (eqToHom (symm p2)).1 := by
+        calc
+        F.1.left.map pre_g.1
+          = ((F / J').map pre_g).1 := rfl
+        _ = (eqToHom p1 ≫ g ≫ eqToHom (symm p2)).1 := by rw [(Equivalence.fullOfEquivalence (F / J')).witness (eqToHom p1 ≫ g ≫ eqToHom (symm p2)) ]
+        _ = FiberToTotalSpace.map (eqToHom p1 ≫ g ≫ eqToHom (symm p2)) := by rfl
+        _ = FiberToTotalSpace.map (eqToHom p1) ≫ FiberToTotalSpace.map g ≫ FiberToTotalSpace.map (eqToHom (symm p2)) := by rw [FiberToTotalSpace.map_comp , FiberToTotalSpace.map_comp ]
+        _ = _ := by rfl
+
+
+      let pre_f : Y ⟶ X := pre_g.1 ≫ φ.1
+      use pre_f
+      rw [Functor.map_comp]
+      rw [pre_gh]
+      let hg : g.1 ≫ F'.map φ.1 = f := hg.left
+      rw [← hg]
+      symm
+      trans (g.1 ≫ F.1.left.map φ.1)
+      · rfl
+      · apply (· =≫ F.1.left.map φ.1)
+        rw [eqToHom_refl, eqToHom_refl] ; symm ;
+        calc
+        _ = FiberToTotalSpace.map (𝟙 _) ≫ FiberToTotalSpace.map g ≫ FiberToTotalSpace.map (𝟙 _) := by rfl
+        _ = 𝟙 _ ≫ FiberToTotalSpace.map g ≫ FiberToTotalSpace.map (𝟙 _) := by apply (· =≫_) ; rw [FiberToTotalSpace.map_id]
+        _ = FiberToTotalSpace.map g ≫ FiberToTotalSpace.map (𝟙 _) :=by apply Category.id_comp
+        _ = FiberToTotalSpace.map g  ≫ 𝟙 _ := by apply (FiberToTotalSpace.map g ≫= · ) ; rw [FiberToTotalSpace.map_id]
+        _ = FiberToTotalSpace.map g := by apply Category.comp_id
+        _ = g.1 := by rfl
+       -- (F.1.left.map φ.1) -- aesop
+
 
 def VertEssImg {P Q : fibration B} (F : P ⟶ Q): Set Q.1.left :=  fun X =>
   ∃ Y : obj_over (P:=P.1.hom) (Q.1.hom.obj X) , Nonempty ((F / (Q.1.hom.obj X)).obj Y ≅ ⟨ X , rfl⟩ )
@@ -109,7 +183,7 @@ def VertEssImg {P Q : fibration B} (F : P ⟶ Q): Set Q.1.left :=  fun X =>
 class VertEssSurj  {P Q : fibration B} (F : P ⟶ Q) : Prop where
   mem_isVertEssSurj : ∀ (X : Q.1.left ) , X ∈ VertEssImg F
 open VertEssSurj
-@[simp]
+
 noncomputable def objPreimage  {P Q : fibration B} (F : P ⟶ Q) [VertEssSurj F]  (Y : Q.1.left) : obj_over (P:=P.1.hom) (Q.1.hom.obj Y) :=
    (mem_isVertEssSurj (F:=F) Y).choose
 
@@ -118,7 +192,7 @@ noncomputable def objPreimage  {P Q : fibration B} (F : P ⟶ Q) [VertEssSurj F]
 
 /-- Applying an essentially surjective functor to a preimage of `Y` yields an object that is
     isomorphic to `X`. -/
-@[simp]
+
 noncomputable def objObjPreimageIso   {P Q : fibration B} (F : P ⟶ Q) [VertEssSurj F]  (X : Q.1.left):
   (F / (Q.1.hom.obj (X))).obj (objPreimage F X)  ≅ ⟨ X , rfl⟩  :=
   Classical.choice (mem_isVertEssSurj (F:=F) X).choose_spec
@@ -145,27 +219,78 @@ private noncomputable def equivalenceInverse : Q.1.left ⥤ P.1.left
     where
   obj X :=  (objPreimage F X).1
   map {X Y} f := F.1.left.preimage ((objObjPreimageIso F X).hom.1 ≫ f ≫ ((objObjPreimageIso F Y).inv.1))
-  map_id X := by  sorry--  apply F.1.left.map_injective;
-  map_comp {X Y Z} f g := by  sorry -- apply F.1.left.map_injective; simp ;
-private noncomputable def counit : (equivalenceInverse F) ⋙ F.1.left ≅ 𝟙 Q.1.left :=
-  NatIso.ofComponents (fun X ↦ FiberToTotalSpace.mapIso (objObjPreimageIso F X)) (by sorry)
+  map_id X := by
+    apply F.1.left.map_injective;
+    rw [Functor.image_preimage,Functor.map_id , Category.id_comp] ;
+    trans ((objObjPreimageIso F X).hom ≫ (objObjPreimageIso F X).inv).1
+    · rfl
+    · rw [Iso.hom_inv_id] ; rfl
 
-  /-
-  Surpringsingly we need first the following theorem to proceed: Do we?
+  map_comp {X Y Z} f g := by
+    apply F.1.left.map_injective;
+    rw [Functor.map_comp,Functor.image_preimage,Functor.image_preimage,Functor.image_preimage] ;
+    symm
+    calc
+    ((objObjPreimageIso F X).hom.1 ≫ f ≫ (objObjPreimageIso F Y).inv.1) ≫ (objObjPreimageIso F Y).hom.1 ≫ g ≫ (objObjPreimageIso F Z).inv.1
+      = (((objObjPreimageIso F X).hom.1 ≫ f) ≫ (objObjPreimageIso F Y).inv.1) ≫ (objObjPreimageIso F Y).hom.1 ≫ g ≫ (objObjPreimageIso F Z).inv.1 := by apply (· =≫_) ; rw [← Category.assoc]
+    _ = ((objObjPreimageIso F X).hom.1 ≫ f) ≫ ((objObjPreimageIso F Y).inv.1 ≫ (objObjPreimageIso F Y).hom.1) ≫ (g ≫ (objObjPreimageIso F Z).inv.1) := by rw [exchangeLaw]
+    _ = ((objObjPreimageIso F X).hom.1 ≫ f) ≫ ((objObjPreimageIso F Y).inv ≫ (objObjPreimageIso F Y).hom).1 ≫ (g ≫ (objObjPreimageIso F Z).inv.1) := by rfl
+    _ = ((objObjPreimageIso F X).hom.1 ≫ f) ≫ 𝟙 _ ≫ (g ≫ (objObjPreimageIso F Z).inv.1) := by rw [Iso.inv_hom_id] ; rfl
+    _ = ((objObjPreimageIso F X).hom.1 ≫ f) ≫ (g ≫ (objObjPreimageIso F Z).inv.1) := by rw [Category.id_comp]
+    _ = (objObjPreimageIso F X).hom.1 ≫ (f ≫ g) ≫ (objObjPreimageIso F Z).inv.1 := by rw [← exchangeLaw]
+/-
+lemma compMap {X Y : Q.1.left} {f : X ⟶ Y} : (equivalenceInverse F ⋙ F.1.left).map f = (objObjPreimageIso F X).hom.1 ≫ f ≫ (objObjPreimageIso F Y).inv.1 := by
+  rw [Functor.comp_map , Functor.mapIso_hom, Functor.mapIso_hom]
+  unfold equivalenceInverse ; rw [Functor.image_preimage]
   -/
-
-
+lemma VerticalAsPath {P : fibration B} {I} {X Y : P[I]} {f : X.1 ⟶ Y.1} (isV : isVertical f) : P.1.hom.map f = eqToHom (X.2.trans Y.2.symm) := by
+  calc
+  P.1.hom.map f = (P.1.hom.map f ≫ eqToHom (Y.2)) ≫ eqToHom Y.2.symm := by symm ; rw [Category.assoc, eqToHom_trans,eqToHom_refl,Category.comp_id]
+  _ = eqToHom X.2 ≫ eqToHom Y.2.symm := by apply (· =≫_) ; exact isV
+  _ = _ := by rw [eqToHom_trans]
+private noncomputable def counit : (equivalenceInverse F) ⋙ F.1.left ≅ 𝟙 Q.1.left := by
+  apply NatIso.ofComponents ;swap
+  · intro X
+    exact FiberToTotalSpace.mapIso (objObjPreimageIso F X)
+  · intro X Y f ; rw [Functor.comp_map , Functor.mapIso_hom, Functor.mapIso_hom]
+    unfold equivalenceInverse ; rw [Functor.image_preimage , (Category.assoc _ _ _).trans exchangeLaw]
+    calc
+    _ = _ ≫ FiberToTotalSpace.map ((objObjPreimageIso F Y).inv ≫ (objObjPreimageIso F Y).hom) := by apply (_≫=·) ; symm ; apply FiberToTotalSpace.map_comp
+    _ = ((objObjPreimageIso F X).hom.1 ≫ f) := by rw [Iso.inv_hom_id , Functor.map_id , Category.comp_id]
+    _ = _ := by aesop
+lemma rwFuncComp'  {M N  : P.1.left} (morph : M ⟶ N):
+  P.1.hom.map morph = eqToHom (by symm ; rw [comm F] ) ≫ (Q.1).hom.map ((F.1).left.map morph) ≫ eqToHom (by rw [← comm F])  := by
+  symm ; rw [rwFuncComp F morph,← Category.assoc,eqToHom_trans,eqToHom_refl,Category.id_comp] ;
 private noncomputable def equivalenceOverInverse  : Q.1 ⟶ P.1 := by
   have overMorphism : (equivalenceInverse F) ⋙ P.1.hom = Q.1.hom :=  by
     apply Functor.ext ; swap ;
     · intro X ; unfold equivalenceInverse ; simp ;
       let pre := (mem_isVertEssSurj (F:=F) X).choose --obtain ⟨ pre , myIso ⟩
       trans (P.1.hom.obj (pre.1))
-      · apply congrArg P.1.hom.obj ; simp ;-- unfold objPreimage
+      · apply congrArg P.1.hom.obj ; simp ; rfl-- unfold objPreimage
       · exact pre.2
 
-    · sorry -- Remark: I will later give a more interesting proof of Over Naturality
-  exact Over.homMk (equivalenceInverse F : Q.1.left ⟶ P.1.left)  overMorphism
+    · intro X Y f
+
+      let f' := (equivalenceInverse F).map f
+      have th1 : Q.1.hom.map ((objObjPreimageIso F X).hom.1)  = eqToHom (_) := VerticalAsPath (objObjPreimageIso F X).hom.2
+      have th2 : Q.1.hom.map (objObjPreimageIso F Y).inv.1 = eqToHom (_) := VerticalAsPath (objObjPreimageIso F Y).inv.2
+      have this : ((F.1).left).map f' = (objObjPreimageIso F X).hom.1 ≫ f ≫ (objObjPreimageIso F Y).inv.1 := by
+        calc
+        _ = F.1.left.map ((equivalenceInverse F).map f) := rfl
+        _ = F.1.left.map (F.1.left.preimage ((objObjPreimageIso F X).hom.1 ≫ f ≫ ((objObjPreimageIso F Y).inv.1))) := rfl
+        _ = _ := by rw [Functor.image_preimage F.1.left]
+
+      calc _ = P.1.hom.map f' := by rw [Functor.comp_map (equivalenceInverse F) P.1.hom f]
+        _ = eqToHom (comm F) ≫ Q.1.hom.map (F.1.left.map f') ≫ eqToHom ((comm F).symm) := rwFuncComp' F f'
+        _ = eqToHom (comm F) ≫ Q.1.hom.map ((objObjPreimageIso F X).hom.1 ≫ f ≫ (objObjPreimageIso F Y).inv.1) ≫ eqToHom ((comm F).symm) := by rw [this]
+        _ = eqToHom (comm F) ≫ (Q.1.hom.map ((objObjPreimageIso F X).hom.1) ≫ Q.1.hom.map f ≫ Q.1.hom.map (objObjPreimageIso F Y).inv.1) ≫ eqToHom ((comm F).symm) := by rw [Functor.map_comp,Functor.map_comp]
+        _ = (eqToHom (comm F) ≫ eqToHom (_)) ≫ (Q.1.hom.map f ≫ Q.1.hom.map (objObjPreimageIso F Y).inv.1) ≫ eqToHom ((comm F).symm)  := by rw [exchangeLaw] ; rw [th1]
+        _ = eqToHom (_) ≫ (Q.1.hom.map f ≫ Q.1.hom.map (objObjPreimageIso F Y).inv.1) ≫ eqToHom ((comm F).symm)  := by rw [eqToHom_trans]
+        _ = eqToHom (_) ≫ Q.1.hom.map f ≫ Q.1.hom.map (objObjPreimageIso F Y).inv.1 ≫ eqToHom ((comm F).symm)  := by rw [Category.assoc]
+        _ = eqToHom (_) ≫ Q.1.hom.map f ≫ eqToHom (_)  := by rw [th2 , eqToHom_trans]
+
+  exact Over.homMk (equivalenceInverse F : Q.1.left ⟶ P.1.left) overMorphism
 
 
 lemma counitIsVertical : ∀ {A : B} (T : obj_over (P :=Q.1.hom) A) ,
@@ -206,23 +331,61 @@ private noncomputable def equivalenceFibrationInverse: Q ⟶ P := ⟨ equivalenc
   rw [Functor.comp_map] at goal
   have goal : isCartesianMorphism P.1 ((equivalenceInverse F).map f) := FullyFaithfullCartFunctorReflectsCartMorph F (by assumption) (by assumption) _ _ _ goal
   assumption⟩
+lemma preImageOfVerticalIsVertical {A : B}  {X Y : P [A]} (f : (F / A).obj X ⟶ (F / A).obj Y) : isVertical (F.1.left.preimage (f.1)) := by
+  unfold isVertical
+  --rw [swapPaths (rwFuncComp F _).symm]
+  rw [rwFuncComp' F , Category.assoc ,Category.assoc , eqToHom_trans, Functor.image_preimage, f.2,eqToHom_trans]
+
+
+
+
 noncomputable def ofFullyFaithfullyEssVertSurj  :
   isEquivalenceInBicategory F where
       inverse := equivalenceFibrationInverse F
       unitIso := by
                   apply CartTrafoOfComp ; swap
                   · exact (NatIso.ofComponents (fun X => (F.1.left.preimageIso <| FiberToTotalSpace.mapIso (objObjPreimageIso F (F.1.left.obj X))).symm)
-                    fun f => by
-                    apply F.1.left.map_injective
-                    sorry)
-                  · sorry
+
+                    fun {X} {Y} f => by
+                      apply F.1.left.map_injective
+                      simp
+                      have fst : (F.1).left.map (((𝟙 P : P ⥤c P).1).left.map f) = F.1.left.map f := by rfl
+                      rw [fst]
+                      have goal := (counit F).inv.2 (F.1.left.map f)
+                      calc
+                      _ = (Functor.id Q.1.left).map (F.1.left.map f) ≫ (CategoryTheory.FiberedCategories.counit F).inv.app (F.1.left.obj Y) := by rfl
+                      _ = (counit F).inv.app (F.1.left.obj X) ≫ (equivalenceInverse F ⋙ F.1.left).map (F.1.left.map f) := goal
+                      _ = _ := by rfl
+
+                  )
+
+                  · intro A T ; unfold rewrittenTrafo ;
+                    let F' := F.1.left
+                    let T' : obj_over (P:=P.1.hom) A := ⟨ (objPreimage F (F'.obj T.1)).1 , by rw [(objPreimage F (F'.obj T.1)).2, ← comm F, T.2] ⟩
+                    let morph : F.1.left.obj T.1 ⟶ F.1.left.obj T'.1 := (objObjPreimageIso F (F.1.left.obj T.1)).symm.hom.1
+                    let m : (F / A).obj T ⟶ (F / A).obj T' := by
+                      use morph
+                      have this := (objObjPreimageIso F (F.1.left.obj T.1)).symm.hom.2
+                      unfold isVertical ;
+                      have this : (Q.1.hom.map morph ≫ eqToHom (comm F).symm) = eqToHom (by rw [T'.2 , ← comm F , T.2] ) := by
+                        have t := VerticalAsPath this
+
+                        calc
+                          Q.1.hom.map morph ≫ eqToHom ( (comm F).symm) = eqToHom (_) ≫   eqToHom ( (comm F).symm) := by apply (· =≫_) ; exact t
+                          _ = eqToHom (_) := by rw [eqToHom_trans]
+                      calc
+                      _ = (Q.1.hom.map morph ≫ eqToHom (comm F).symm) ≫ eqToHom (T'.2) := by symm ; rw [Category.assoc , eqToHom_trans]
+                      _ = eqToHom (by rw [(comm F).symm , T'.2,T.2] ) ≫ eqToHom T'.2 := by rw [this]
+                      _ = eqToHom ((by rw [← comm F, T.2] )) := by rw [eqToHom_trans]
+
+                    have : isVertical (X:= T) (X':=T') ( F.1.left.preimage morph) := preImageOfVerticalIsVertical F m
+                    exact this
+
       counitIso := by
                       apply CartTrafoOfComp ; swap
                       · exact counit F
                       · intro A T
-                        unfold rewrittenTrafo
-                        rw [eqToHom_refl, eqToHom_refl]
-                        rw [Category.comp_id, Category.id_comp]
+
                         --nfold NatIso.ofComponents
                         apply counitIsVertical
 
