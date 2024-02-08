@@ -30,6 +30,114 @@ variable {P Q : fibration B}{F : P ⟶ Q}
 --notation (priority := high) P "[" A "]" => obj_over (P:=P.1.hom) A
 
 
+lemma liftFromCartesiannessIsUnique  {P : fibration B} {J I : B} {X  : P[I]} {Y : P [J]} {u : J ⟶ I}
+  {C : liftOfAlong X u} (isw : isWeakCartesian C) {f f' : Y ⟶ C.Y} (p : f.1 ≫ C.φ.1 = f'.1 ≫ C.φ.1) : f = f' := by
+    let lift : liftOfAlong X u := ⟨ Y , over_comp  (by rw [Category.id_comp]) C.φ (coercBack f) ⟩
+    exact ExistsUnique.unique (isw lift ) rfl p.symm
+def mappingOverHom {P Q : fibration B} (F : P ⟶ Q ) {J I} {u : J ⟶ I} {Y : P [J]} {X : P[I]} (φ : over_hom u Y X) :  over_hom u ((F / J).obj Y) ((F / I).obj X) := by
+  use F.1.left.map φ.1
+  let hφ := φ.2
+
+  calc
+      (Q.1).hom.map ((F.1).left.map φ.1) ≫ eqToHom (_ : Q.1.hom.obj ((F / I).obj X).1 = I)
+      =  ((Q.1).hom.map ((F.1).left.map φ.1) ≫ eqToHom (symm (comm F))) ≫ eqToHom X.2 := by rw [Category.assoc] ; apply (_ ≫= · ) ; symm ; apply eqToHom_trans
+    _ = (eqToHom (symm (comm F)) ≫ P.1.hom.map (φ.1)) ≫ eqToHom X.2 := by rw [rwFuncComp F φ.1]
+    _ = eqToHom (_) ≫ eqToHom (_) ≫ u := by rw [Category.assoc] ; apply (_≫= · ) ; apply φ.2
+    _ = eqToHom (_ : (Q).1.hom.obj ((F / J).obj Y).1 = J) ≫ u := by  rw [← Category.assoc] ; apply (· =≫ u) ; apply eqToHom_trans
+
+
+lemma rwFuncComp'  {M N  : P.1.left} (F : P ⟶ Q) (morph : M ⟶ N):
+  P.1.hom.map morph = eqToHom (by symm ; rw [comm F] ) ≫ (Q.1).hom.map ((F.1).left.map morph) ≫ eqToHom (by rw [← comm F])  := by
+  symm ; rw [rwFuncComp F morph,← Category.assoc,eqToHom_trans,eqToHom_refl,Category.id_comp] ;
+lemma rwFuncComp''  {M N  : P.1.left} (F : P ⟶ Q) (morph : M ⟶ N):
+  (Q.1).hom.map ((F.1).left.map morph) = eqToHom (by symm ; rw [comm F] ) ≫ P.1.hom.map morph  ≫ eqToHom (by rw [← comm F])  := by
+  rw [rwFuncComp' F morph,← Category.assoc,← Category.assoc,eqToHom_trans,eqToHom_refl,Category.id_comp,Category.assoc,eqToHom_trans,eqToHom_refl,Category.comp_id] ;
+
+def cartFunctorPresCartLifts {I : B} {F : P ⟶ Q} {X : obj_over (P:=P.1.hom) I} {u : J ⟶I } (L : cartesianLiftOfAlong X u) : cartesianLiftOfAlong ( (F / I).obj X) u := by
+    let Fφ := mappingOverHom F L.φ
+    let FXf :=  (F / I).obj X
+    let Ff : isCartesianMorphism Q.1 (F.1.left.map L.φ.1) := F.2 L.φ.1 (cartLiftToCartMor L) --
+    apply cartesianMorphismToCartLiftGeneral ((F / J).obj L.Y) Ff
+    symm
+    rw [rwFuncComp'' F L.φ.1]
+    rw [exchangeLaw,eqToHom_trans,Category.assoc,eqToHom_trans]
+    rw [L.φ.2, ← Category.assoc,eqToHom_trans,eqToHom_refl,Category.id_comp]
+
+theorem Faithfulness : (∀ (I : B) ,  IsEquivalence (F / I) ) → (∀ Y X : P.1.left , Function.Injective (F.1.left.map : (Y ⟶ X) → (F.1.left.obj Y ⟶ F.1.left.obj X))) := by
+
+      intro ass
+      intro Y X
+
+      let F' := F.1.left
+      intro ρ ρ' hρ
+      let f := F'.map ρ
+      let u := P.1.hom.map ρ
+      let I := P.1.hom.obj X
+      let J := P.1.hom.obj Y
+      let Xf : obj_over I := ⟨X , rfl⟩
+      let Yf : obj_over J := ⟨Y , rfl⟩
+      obtain ⟨⟨ Y' , φ⟩  , hφ⟩   := P.2 u Xf
+      have isCart : isCartesianMorphism P.1 φ.1 := cartLiftToCartMor ⟨_ , hφ⟩
+
+      have goal : isWeakCartesian (P:=Q.1.hom) (morphismToLift (F'.map φ.1)) := weakCartifCartesian ⟨_ , F.2 _ isCart⟩
+      have p : Q.1.hom.obj (F'.obj Y) = Q.1.hom.obj (F'.obj Y'.1) := by rw [← comm F, ← comm F] ; symm ; exact Y'.2
+
+
+
+
+
+      let J' := Q.1.hom.obj (F'.obj Y'.1)
+
+      let ρ1 : over_hom (u) Yf Xf := by use ρ ; rw [eqToHom_refl,eqToHom_refl, Category.comp_id,Category.id_comp]
+      let ρ1' : over_hom (u) Yf Xf := by use ρ' ; rw [rwFuncComp' F , eqToHom_refl,eqToHom_refl, Category.comp_id,Category.id_comp,← hρ, ← rwFuncComp' F]
+
+      obtain ⟨ ν , hν ⟩ := (weakCartifCartesian ⟨ _ , hφ⟩ ⟨ _ , ρ1 ⟩  )
+      obtain ⟨ ν' , hν' ⟩ := (weakCartifCartesian ⟨ _ , hφ⟩ ⟨ _ , ρ1' ⟩  )
+      have t : ρ = ν.1 ≫ φ.1 := by rw [hν.1 ]
+      have t' : ρ' = ν'.1 ≫ φ.1 := by rw [hν'.1 ]
+      let Fφ := F'.map φ.1
+      rw [t,t']
+      have this : (morphismToLift (P:=Q.1.hom) Fφ).φ.1 = Fφ := rfl
+
+      let f1 : over_hom (P:=Q.1.hom) (Q.1.hom.map (Fφ)) ⟨ F'.obj Y , p⟩  ⟨ F'.obj X , rfl⟩  := by
+        use f ; -- transport (by sorry) (mappingOverHom F ρ1)
+        have this := (mappingOverHom F ρ1).2
+        have this' := (mappingOverHom F φ).2
+        rw [eqToHom_refl,Category.comp_id]
+        apply ((IsIso.of_iso (eqToIso (symm (comm F)))).mono_of_iso).right_cancellation
+        rw [eqToIso.hom,Category.assoc, rwFuncComp F]
+        rw [rwFuncComp F,← Category.assoc, eqToHom_trans]
+
+        have this : P.1.hom.map φ.1 = _ := by
+          trans P.1.hom.map φ.1 ≫ eqToHom (rfl)
+          · aesop -- Remark: I dont understand why this code fails: rw [eqToHom_refl ,Category.comp_id]
+          · exact φ.2
+        have this2 : P.1.hom.map ρ = _ := by
+          trans P.1.hom.map ρ ≫ eqToHom (rfl)
+          · rw [eqToHom_refl ,Category.comp_id]
+          · exact ρ1.2
+        rw [this,← Category.assoc ,eqToHom_trans,this2,← Category.assoc,eqToHom_trans]
+
+
+      let fLift : liftOfAlong ⟨ F'.obj X , rfl⟩ (Q.1.hom.map Fφ) := ⟨ ⟨ F'.obj Y , p ⟩ , f1⟩
+
+      apply (·=≫ φ.1)
+      congr
+      apply (F / J).map_injective
+
+      apply liftFromCartesiannessIsUnique (weakCartifCartesian (cartFunctorPresCartLifts ⟨ _ , hφ⟩ ))
+      have rem1 : ((F / J).map ν).1 ≫ (morphismToLift <| F'.map φ.1).φ.1 = fLift.φ.1 := by
+
+          rw [this]
+
+          unfold toFunctorOnFibers;rw [← F'.map_comp] ; rw [hν.1]
+
+      have rem2 : ((F / J).map ν').1 ≫ (morphismToLift <| F'.map φ.1).φ.1 = fLift.φ.1 := by
+          rw [this]
+          unfold toFunctorOnFibers;rw [← F'.map_comp] ; rw [hν'.1] ; exact hρ.symm
+      exact (rem1.trans (rem2.symm))
+
+
 theorem Fullness {F : P ⟶ Q}: (∀ (I : B) ,  IsEquivalence (F / I) ) → (∀ Y X : P.1.left , Function.Surjective (F.1.left.map : (Y ⟶ X) → (F.1.left.obj Y ⟶ F.1.left.obj X))) := by
 
       intro ass
@@ -102,79 +210,8 @@ theorem Fullness {F : P ⟶ Q}: (∀ (I : B) ,  IsEquivalence (F / I) ) → (∀
 
 
 
-theorem Faithfulness : (∀ (I : B) ,  IsEquivalence (F / I) ) → (∀ Y X : P.1.left , Function.Injective (F.1.left.map : (Y ⟶ X) → (F.1.left.obj Y ⟶ F.1.left.obj X))) := by
-
-      intro ass
-      intro Y X
-
-      let F' := F.1.left
-      intro ρ ρ' hρ
-      let f := F'.map ρ
-      let u := Q.1.hom.map f
-      let I := Q.1.hom.obj (F'.obj X)
-      let J := Q.1.hom.obj (F'.obj Y)
-      let Xf : obj_over I := ⟨X , comm F⟩
-      let Yf : obj_over J := ⟨Y , comm F⟩
-      obtain ⟨⟨ Y' , φ⟩  , hφ⟩   := P.2 u Xf
-      have isCart : isCartesianMorphism P.1 φ.1 := cartLiftToCartMor ⟨_ , hφ⟩
-
-      have goal : isWeakCartesian (P:=Q.1.hom) (morphismToLift (F'.map φ.1)) := weakCartifCartesian ⟨_ , F.2 _ isCart⟩
-      have p : Q.1.hom.obj (F'.obj Y) = Q.1.hom.obj (F'.obj Y'.1) := by
-        calc
-              _ = P.1.hom.obj Y' := symm (Y'.2)
-             _ = _ := comm F
-
-      let Fφ : over_hom (P:=Q.1.hom) (((Q.1).hom.map (F'.map φ.1))) ⟨ F'.obj Y , p ⟩ ⟨ F'.obj X , rfl⟩  := by
-        use f
-        rw [← Functor.comp_map F' Q.1.hom φ.1]
-        have rwr : (F' ⋙ Q.1.hom).map φ.1 = _ := Functor.congr_hom (Over.w F.1) φ.1
-        rw [rwr]
-        rw [φ.2]
-        rw [←Category.assoc,eqToHom_trans]
-        rw [←Category.assoc,eqToHom_trans]
-        aesop
-
-      obtain ⟨ g , hg⟩  := goal ⟨ _ , Fφ⟩
-
-      let J' := Q.1.hom.obj (F'.obj Y'.1)
-      let Y1 : obj_over J' := ⟨ Y  , (comm F).trans p⟩
-      let Y1' : obj_over (P:=P.1.hom) J' := ⟨ Y'.1 , comm F⟩
-      have p1 : (F / J').obj  Y1 = ⟨ F'.obj Y ,p⟩ := rfl
-      have p2 : (F / J').obj Y1'  = ⟨F'.obj Y'.1 , rfl⟩ := rfl
-      let ρ1 : over_hom (eqToHom (by sorry) ≫ u) Y1 Xf := by sorry
-      let ν : Y1 ⟶ Y1' := (hφ  ⟨ _ , ρ1 ⟩  ).choose
-
-      /-
-      let pre_g  : Y1 ⟶ Y1' := (Equivalence.fullOfEquivalence (F / J')).preimage (eqToHom p1 ≫ g ≫ eqToHom (symm p2))  --: Yf ⟶ Y'
-      have pre_gh : F.1.left.map pre_g.1 = (eqToHom p1).1 ≫ g.1 ≫ (eqToHom (symm p2)).1 := by
-        calc
-        F.1.left.map pre_g.1
-          = ((F / J').map pre_g).1 := rfl
-        _ = (eqToHom p1 ≫ g ≫ eqToHom (symm p2)).1 := by rw [(Equivalence.fullOfEquivalence (F / J')).witness (eqToHom p1 ≫ g ≫ eqToHom (symm p2)) ]
-        _ = FiberToTotalSpace.map (eqToHom p1 ≫ g ≫ eqToHom (symm p2)) := by rfl
-        _ = FiberToTotalSpace.map (eqToHom p1) ≫ FiberToTotalSpace.map g ≫ FiberToTotalSpace.map (eqToHom (symm p2)) := by rw [FiberToTotalSpace.map_comp , FiberToTotalSpace.map_comp ]
-        _ = _ := by rfl
 
 
-      let pre_f : Y ⟶ X := pre_g.1 ≫ φ.1
-      use pre_f
-      rw [Functor.map_comp]
-      rw [pre_gh]
-      let hg : g.1 ≫ F'.map φ.1 = f := hg.left
-      rw [← hg]
-      symm
-      trans (g.1 ≫ F.1.left.map φ.1)
-      · rfl
-      · apply (· =≫ F.1.left.map φ.1)
-        rw [eqToHom_refl, eqToHom_refl] ; symm ;
-        calc
-        _ = FiberToTotalSpace.map (𝟙 _) ≫ FiberToTotalSpace.map g ≫ FiberToTotalSpace.map (𝟙 _) := by rfl
-        _ = 𝟙 _ ≫ FiberToTotalSpace.map g ≫ FiberToTotalSpace.map (𝟙 _) := by apply (· =≫_) ; rw [FiberToTotalSpace.map_id]
-        _ = FiberToTotalSpace.map g ≫ FiberToTotalSpace.map (𝟙 _) :=by apply Category.id_comp
-        _ = FiberToTotalSpace.map g  ≫ 𝟙 _ := by apply (FiberToTotalSpace.map g ≫= · ) ; rw [FiberToTotalSpace.map_id]
-        _ = FiberToTotalSpace.map g := by apply Category.comp_id
-        _ = g.1 := by rfl
-       -- (F.1.left.map φ.1) -- aesop
 
 
 def VertEssImg {P Q : fibration B} (F : P ⟶ Q): Set Q.1.left :=  fun X =>
@@ -258,9 +295,7 @@ private noncomputable def counit : (equivalenceInverse F) ⋙ F.1.left ≅ 𝟙 
     _ = _ ≫ FiberToTotalSpace.map ((objObjPreimageIso F Y).inv ≫ (objObjPreimageIso F Y).hom) := by apply (_≫=·) ; symm ; apply FiberToTotalSpace.map_comp
     _ = ((objObjPreimageIso F X).hom.1 ≫ f) := by rw [Iso.inv_hom_id , Functor.map_id , Category.comp_id]
     _ = _ := by aesop
-lemma rwFuncComp'  {M N  : P.1.left} (morph : M ⟶ N):
-  P.1.hom.map morph = eqToHom (by symm ; rw [comm F] ) ≫ (Q.1).hom.map ((F.1).left.map morph) ≫ eqToHom (by rw [← comm F])  := by
-  symm ; rw [rwFuncComp F morph,← Category.assoc,eqToHom_trans,eqToHom_refl,Category.id_comp] ;
+
 private noncomputable def equivalenceOverInverse  : Q.1 ⟶ P.1 := by
   have overMorphism : (equivalenceInverse F) ⋙ P.1.hom = Q.1.hom :=  by
     apply Functor.ext ; swap ;
@@ -410,6 +445,6 @@ theorem equivalenceOfFibrationsCheckOnFibers : (∀ (I : B) ,  IsEquivalence (F 
     ·  intro X Y f ; exact (Fullness ass _ _ f).choose
 
     ·  intro X Y f ; exact (Fullness ass _ _ f).choose_spec
-  have faithfull : Faithful F' := by sorry
+  have faithfull : Faithful F' := ⟨  by apply Faithfulness ass ⟩
 
   apply ofFullyFaithfullyEssVertSurj
