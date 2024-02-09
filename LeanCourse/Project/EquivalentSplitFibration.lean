@@ -154,6 +154,7 @@ lemma E_functor_map_comp  {X' Y' Z' : (Sp.obj P).1.1.left} (g : Z' ⟶Y') (f : Y
 
 
 
+
     let vf : ((restFunctor.map ⟨ v ⟩ ).obj Y).1.left ⟶
       (((restFunctor.map ⟨ v ≫ u ⟩ ).obj X)).1.left :=
       ((restFunctor.map ⟨ v ⟩ ).map a').1 ≫ eqToHom compPath
