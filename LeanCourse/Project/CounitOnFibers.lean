@@ -90,7 +90,7 @@ variable {P : fibration B}
 
 @[simp]def E_obj_obj {I : B} (X : (fundamentalFibration.obj I ⟶ P)) :  obj_over (P:=P.1.hom) I := (X / I).obj ⟨Over.mk (𝟙 I ) , rfl ⟩
 
-@[simp] def E_obj_map {I : B} {F G : (fundamentalFibration.obj I ⟶ P)} (f : F ⟶ G) : E_obj_obj F ⟶E_obj_obj G
+@[simps] def E_obj_map {I : B} {F G : (fundamentalFibration.obj I ⟶ P)} (f : F ⟶ G) : E_obj_obj F ⟶E_obj_obj G
   := ⟨ rewrittenTrafo f.1 ⟨ Over.mk (𝟙 I ) , rfl ⟩ , by apply f.2⟩
 @[simp] lemma cartesianIdTrans' {A : B} {T : obj_over A} (F : P ⥤c Q) : rewrittenTrafo (𝟙 F.1.1) T = 𝟙 ((F / A).obj T).1 := by simp ; aesop
 @[simp] lemma idCartFunctor {P Q : fibration B} (F : P ⟶ Q) : ∀ X,  ((𝟙 F : F =>c F).1).app X = 𝟙 (F.1.left.obj X) := fun X ↦ rfl
@@ -101,7 +101,7 @@ def E_obj_map_id {I : B} (X : (fundamentalFibration.obj I ⟶ P)) :
   aesop
 
 -- def E_obj_map_comp
-@[simps] def E'_obj  {I : B} : (fundamentalFibration.obj I ⟶ P) ⥤ obj_over (P:=P.1.hom) I where
+@[simps!] def E'_obj  {I : B} : (fundamentalFibration.obj I ⟶ P) ⥤ obj_over (P:=P.1.hom) I where
   obj := fun X ↦ E_obj_obj X
   map := fun f ↦ E_obj_map f
   map_id := fun X ↦ E_obj_map_id X

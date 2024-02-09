@@ -47,8 +47,9 @@ def forget : (obj_over (P:=P) A) ⥤ 𝕏 where
 
 @[simp] lemma compInFib {X Y Z : obj_over (P:=P) A} (f : X ⟶ Y) (g : Y ⟶ Z) : (f ≫ g).1 = f.1 ≫ g.1 := rfl
 @[simp] lemma idInFib {X : obj_over (P:=P) A} : (𝟙 X : X ⟶ X).1 = 𝟙 X.1 := rfl
-@[simp] def coerc { X X' : obj_over A} (f : over_hom (P:=P) (𝟙 A) X X') : X ⟶ X' := ⟨ f.1 , by rw [isVertical, f.2] ; aesop ⟩
-@[simp] def coercBack {X X' : obj_over A} (f : X ⟶ X') : over_hom (P:=P) (𝟙 A) X X' := ⟨ f.1 , by rw [f.2] ; aesop⟩
+@[simps] def coerc { X X' : obj_over A} (f : over_hom (P:=P) (𝟙 A) X X') : X ⟶ X' := ⟨ f.1 , by rw [isVertical, f.2] ; aesop ⟩
+@[simps] def coercBack {X X' : obj_over A} (f : X ⟶ X') : over_hom (P:=P) (𝟙 A) X X' := ⟨ f.1 , by rw [f.2] ; aesop⟩
+
 @[ext] structure liftOfAlong {J I : B} ( X : obj_over (P:=P) I) (u : J ⟶ I)  where
   Y : obj_over (P:=P) J
   φ : over_hom u Y X
@@ -61,7 +62,7 @@ variable {J I : B} {u : J ⟶ I}
   Y := ⟨ Y , rfl⟩
   φ := by use φ; simp
 
-
+lemma morphismToLift_coe {X Y : 𝕏} (φ : Y ⟶ X) : (morphismToLift (P:=P) φ).φ.1 = φ := rfl
 
 def isCartesian  {X : obj_over (P:=P) I} (τ: liftOfAlong X u):=
   ∀ {K : B} (v : K ⟶ J) (L: liftOfAlong X (v ≫u )) ,
@@ -101,8 +102,8 @@ def weakCartifCartesian {J I : B} {u : J ⟶ I} {X : obj_over (P:=P) I} (τ: car
   have this : coercBack ψ' = ψ := by
     apply hψ.2
     rw [← hψ.1 ]
-    rw [coercBack]
-    simp
+    rw [coercBack_coe]
+
     rw [hψ' , ← LeqPsiTau]
   apply Subtype.ext
   simp
@@ -262,8 +263,8 @@ instance : Category (fibration B) where
   Hom := fun P Q ↦ P ⥤c Q
   id := fun P ↦ by use 𝟙 P.1 ; intro φ hφ ; simp
   comp := fun {P Q R} F G ↦ ⟨ F.1 ≫ G.1 , fun {X} {Y} φ hφ ↦ G.2 _ (F.2 _ hφ)⟩
-@[simp] lemma simptest {P Q R: fibration B} {F : P ⥤c Q} {G : Q ⥤c R} : (F ≫ G).1 = F.1 ≫ G.1 := rfl
-@[simp] lemma compCheck {A : B} (F : P ⥤c Q) (G : Q ⥤c R) (X : obj_over A) : (G/A).obj ((F / A).obj X) = ((F ≫ G) / A).obj X := rfl
+
+
 instance {P Q : fibration B} : Category (P ⟶ Q) where
   Hom := fun F G ↦ F =>c G
   id := cartesianIdTrans
@@ -293,5 +294,7 @@ def extFunctor {C D : Cat} {F G : C ⥤ D}
   exact ((isLevelwiseIdent Y).choose)
   )
 def PShCat (B : Cat.{v₁ , u₁} )  : Cat:= Bundled.of (B ᵒᵖ ⥤ Cat.{s₁ , t₁})
+@[simp] lemma simptest {P Q R: fibration B} {F : P ⥤c Q} {G : Q ⥤c R} : (F ≫ G).1 = F.1 ≫ G.1 := rfl
+@[simp] lemma compCheck {A : B} (F : P ⥤c Q) (G : Q ⥤c R) (X : obj_over A) : (G/A).obj ((F / A).obj X) = ((F ≫ G) / A).obj X := rfl
 
 end FiberedCategories

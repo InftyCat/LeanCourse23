@@ -172,13 +172,17 @@ lemma fundamentalFibration_map_id {K : B} : fundamentalFibrationMap (𝟙 K) = �
 lemma fundamentalFibration_map_comp {K J I : B} (v : K ⟶ J ) ( u : J ⟶ I) :
   fundamentalFibrationMap (v ≫u)  = fundamentalFibrationMap v ≫  fundamentalFibrationMap u := by
     ext
+
     simp
     apply Functor.ext ; swap
     · intro X
-      simp
+
       unfold map
       unfold mapRight
-      aesop
+
+      simp
+
+
     · intro X Y f
       apply OverMorphism.ext
       rw [map_map_left]

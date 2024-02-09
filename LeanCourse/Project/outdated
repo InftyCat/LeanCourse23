@@ -19,3 +19,27 @@ lemma strongDiscreteness {A : B} (u : J ⟶ I ) (X : obj_over I)
 @[ext] def extCartLift {J I} (u : J ⟶ I) (X : obj_over (P:=P) I) (r s : cartesianLiftOfAlong X u) (q : r.1 = s.1) : r = s
   := by sorry
 -/
+
+
+/-
+def compPath {X Y : fundamentalFibration.obj I ⟶ P} {u: ((fundamentalFibration.obj I).1).left.1}:
+  P.1.hom.obj ((X.1).left.obj u) ⟶ P.1.hom.obj ((Y.1).left.obj u) := eqToHom (by  rw [← comm X, comm Y]  )
+
+noncomputable def equivOnFibersFullCartSrc {X Y : fundamentalFibration.obj I ⟶ P}
+  (f: E'_obj.obj X ⟶ E'_obj.obj Y)
+  (u: ((fundamentalFibration.obj I).1).left.1)
+  :  cartesianLiftOfAlong (E_obj_obj X)
+    (compPath ≫
+    (eqToHom ((by rw [← comm Y] ; rfl) ) ≫
+
+    u.hom) : P.1.hom.obj ((X.1).left.obj u) ⟶ I) := by
+      let morph : u ⟶ Over.mk (𝟙 _) := Over.homMk u.hom
+      exact cartesianMorphismToCartLift'' (by rw [← Category.assoc , rwFuncComp X morph ] ; unfold compPath ; rw [eqToHom_trans] ; rfl) (X.2 morph (automaticallyCart morph))
+noncomputable def equivOnFibersFullCartTrg {X Y : fundamentalFibration.obj I ⟶ P}
+  (f: E'_obj.obj X ⟶ E'_obj.obj Y)
+  (u: ((fundamentalFibration.obj I).1).left.1)
+  :  cartesianLiftOfAlong (E_obj_obj Y)
+    ((eqToHom ((by rw [← comm Y] ; rfl) ) ≫ u.hom) : P.1.hom.obj ((Y.1).left.obj u) ⟶ I) := by
+      let morph : u ⟶ Over.mk (𝟙 _) := Over.homMk u.hom
+      exact cartesianMorphismToCartLift'' (by rw [rwFuncComp Y] ; rfl) (Y.2 morph (automaticallyCart morph))
+      -/

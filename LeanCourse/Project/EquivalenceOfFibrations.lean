@@ -246,11 +246,7 @@ lemma compMap {X Y : Q.1.left} {f : X ⟶ Y} : (equivalenceInverse F ⋙ F.1.lef
   rw [Functor.comp_map , Functor.mapIso_hom, Functor.mapIso_hom]
   unfold equivalenceInverse ; rw [Functor.image_preimage]
   -/
-lemma VerticalAsPath {P : fibration B} {I} {X Y : P[I]} {f : X.1 ⟶ Y.1} (isV : isVertical f) : P.1.hom.map f = eqToHom (X.2.trans Y.2.symm) := by
-  calc
-  P.1.hom.map f = (P.1.hom.map f ≫ eqToHom (Y.2)) ≫ eqToHom Y.2.symm := by symm ; rw [Category.assoc, eqToHom_trans,eqToHom_refl,Category.comp_id]
-  _ = eqToHom X.2 ≫ eqToHom Y.2.symm := by apply (· =≫_) ; exact isV
-  _ = _ := by rw [eqToHom_trans]
+
 private noncomputable def counit : (equivalenceInverse F) ⋙ F.1.left ≅ 𝟙 Q.1.left := by
   apply NatIso.ofComponents ;swap
   · intro X

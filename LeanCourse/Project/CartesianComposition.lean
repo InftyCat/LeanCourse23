@@ -36,6 +36,9 @@ local notation (priority := high) P "[" A "]" => obj_over (P:=P.hom) A
   (comm : v ≫ u = w)
   (φ: over_hom u Y X) (ψ : over_hom v Z Y) : over_hom w Z X
   := transport comm (over_hom_comp φ ψ)
+
+notation f ">[" comm "]>" g => over_comp comm g f
+notation f ">>" g => over_hom_comp g f
 lemma liftOfAlong_ext  {I : B} {X : obj_over (P:=P.hom) I} {u : J ⟶ I} {L L' : liftOfAlong X u}
   (p : L.Y.1 = L'.Y.1) (hφ : L.φ.1 = (eqToHom p) ≫ L'.φ.1  ) : L = L' := by
     obtain ⟨ Y , φ ⟩ := L
@@ -110,7 +113,7 @@ lemma compCartesianMorphisms  {X Y Z : P.left} {f : X ⟶ Y} {g : Y ⟶ Z}
     have this : morphismToLift  (P:=P.hom) (f ≫ g) = ⟨ _ , oc ⟩  := by
       apply liftOfAlong_ext ; swap
       · rfl
-      · rw [over_comp_coe] ;
+      · rw [over_comp_coe,morphismToLift_coe,morphismToLift_coe,morphismToLift_coe] ;
         simp
 
 
@@ -125,3 +128,20 @@ lemma swapPaths {C : Cat} {X X' Y Y' : C} {s : X = X'} {t : Y = Y'} {f : X ⟶ Y
     _ = (eqToHom (s.symm) ≫ eqToHom (s) ≫ f') ≫ eqToHom (symm t)  := by rw [← Category.assoc]
      _ = ((eqToHom (s.symm) ≫ eqToHom (s)) ≫ f') ≫ eqToHom (symm t)  := by apply (· =≫_ ) ; rw [← Category.assoc]
     _ = _ := by rw [eqToHom_trans , eqToHom_refl , Category.id_comp]
+lemma VerticalAsPath {P : fibration B} {I} {X Y : obj_over (P:=P.1.hom) I} {f : X.1 ⟶ Y.1} (isV : isVertical f) : P.1.hom.map f = eqToHom (X.2.trans Y.2.symm) := by
+  calc
+  P.1.hom.map f = (P.1.hom.map f ≫ eqToHom (Y.2)) ≫ eqToHom Y.2.symm := by symm ; rw [Category.assoc, eqToHom_trans,eqToHom_refl,Category.comp_id]
+  _ = eqToHom X.2 ≫ eqToHom Y.2.symm := by apply (· =≫_) ; exact isV
+  _ = _ := by rw [eqToHom_trans]
+def idCartLift {X : P [I]} : cartesianLiftOfAlong X (𝟙 _) := by
+      use ⟨ X , ⟨ 𝟙 _ , by aesop ⟩ ⟩
+      intro J v L
+      let L' := transportLift (Category.comp_id _) L
+      use L'.φ
+      constructor
+      aesop
+      intro φ hφ
+      apply Subtype.ext
+      rw [← Category.comp_id φ.1]
+      rw [hφ]
+      rfl

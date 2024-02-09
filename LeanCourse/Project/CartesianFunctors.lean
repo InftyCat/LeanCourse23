@@ -309,7 +309,12 @@ lemma liftFromCartesiannessIsUnique  {P : fibration B} {J I : B} {X  : P[I]} {Y 
   {C : liftOfAlong X u} (isw : isWeakCartesian C) {f f' : Y ⟶ C.Y} (p : f.1 ≫ C.φ.1 = f'.1 ≫ C.φ.1) : f = f' := by
     let lift : liftOfAlong X u := ⟨ Y , over_comp  (by rw [Category.id_comp]) C.φ (coercBack f) ⟩
     exact ExistsUnique.unique (isw lift ) rfl p.symm
-def mappingOverHom {P Q : fibration B} (F : P ⟶ Q ) {J I} {u : J ⟶ I} {Y : P [J]} {X : P[I]} (φ : over_hom u Y X) :  over_hom u ((F / J).obj Y) ((F / I).obj X) := by
+lemma liftFromCartesiannessIsUnique'  {P : fibration B} {J I : B} {X  : P[I]} {Y : P [K]} {u : J ⟶ I} {v : K ⟶ J}
+  (C : cartesianLiftOfAlong X u) {f f' : over_hom v Y C.Y} (p : f.1 ≫ C.φ.1 = f'.1 ≫ C.φ.1) : f = f' := by
+    let lift : liftOfAlong X (v ≫ u) := ⟨ Y , over_hom_comp C.φ (f) ⟩
+    exact ExistsUnique.unique (C.2 v lift ) rfl p.symm
+
+@[simps] def mappingOverHom {P Q : fibration B} (F : P ⟶ Q ) {J I} {u : J ⟶ I} {Y : P [J]} {X : P[I]} (φ : over_hom u Y X) :  over_hom u ((F / J).obj Y) ((F / I).obj X) := by
   use F.1.left.map φ.1
   let hφ := φ.2
 
