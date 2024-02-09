@@ -70,7 +70,7 @@ noncomputable def functorOnFibers (X : P [I]) : (fundamentalFibration.obj I).1.l
     symm
     exact congrArg (fun x ↦ x.1) this
 
-notation "f >[ comm ]> g" => over_comp comp f g
+
 @[simps!] noncomputable def OverMorphOnFibers (X : P [I]) : (fundamentalFibration.obj I).1 ⟶ P.1 := by
   apply Over.homMk
   swap
@@ -84,24 +84,35 @@ notation "f >[ comm ]> g" => over_comp comp f g
 
   · sorry
   sorry
+def compPath {X Y : fundamentalFibration.obj I ⟶ P} {u: ((fundamentalFibration.obj I).1).left.1}:
+  P.1.hom.obj ((X.1).left.obj u) ⟶ P.1.hom.obj ((Y.1).left.obj u) := eqToHom (by  rw [← comm X, comm Y]  )
+noncomputable def equivOnFibersFullCartSrc {X Y : fundamentalFibration.obj I ⟶ P}
+  (f: E'_obj.obj X ⟶ E'_obj.obj Y)
+  (u: ((fundamentalFibration.obj I).1).left.1)
+  :  cartesianLiftOfAlong (E_obj_obj X)
+    (compPath ≫
+    (eqToHom ((by rw [← comm Y] ; rfl) ) ≫
+
+    u.hom) : P.1.hom.obj ((X.1).left.obj u) ⟶ I) := by
+      let morph : u ⟶ Over.mk (𝟙 _) := Over.homMk u.hom
+      exact cartesianMorphismToCartLift'' (by rw [← Category.assoc , rwFuncComp X morph ] ; unfold compPath ; rw [eqToHom_trans] ; rfl) (X.2 morph (automaticallyCart morph))
+noncomputable def equivOnFibersFullCartTrg {X Y : fundamentalFibration.obj I ⟶ P}
+  (f: E'_obj.obj X ⟶ E'_obj.obj Y)
+  (u: ((fundamentalFibration.obj I).1).left.1)
+  :  cartesianLiftOfAlong (E_obj_obj Y)
+    ((eqToHom ((by rw [← comm Y] ; rfl) ) ≫ u.hom) : P.1.hom.obj ((Y.1).left.obj u) ⟶ I) := by
+      let morph : u ⟶ Over.mk (𝟙 _) := Over.homMk u.hom
+      exact cartesianMorphismToCartLift'' (by rw [rwFuncComp Y] ; rfl) (Y.2 morph (automaticallyCart morph))
 noncomputable def equivOnFibersFull {X Y : fundamentalFibration.obj I ⟶ P}  (f: E'_obj.obj X ⟶ E'_obj.obj Y) (u: ((fundamentalFibration.obj I).1).left.1)
-  : X.1.left.obj u ⟶ Y.1.left.obj u := by -- ∃! α : over_hom (by sorry) (X / u.1.left)Y.1.left.obj u := by
-          let morph : u ⟶ Over.mk (𝟙 _) := Over.homMk u.hom
-          have t2 : P.1.hom.obj ((Y.1).left.obj u) = u.left := by rw [← comm Y] ; rfl
-          let u' := eqToHom t2  ≫ u.hom
-          have tdiff : P.1.hom.obj ((X.1).left.obj u) = P.1.hom.obj ((Y.1).left.obj u) := by rw [← comm X] ; exact (symm t2)
-          have help :eqToHom tdiff ≫ u' = (P.1).hom.map ((X.1).left.map morph) ≫ eqToHom (by rw [← comm X] ; rfl) := by
-            rw [← Category.assoc] ;
-            rw [rwFuncComp X morph ,eqToHom_trans]
-            rfl
-          let lX : cartesianLiftOfAlong (E_obj_obj X) (eqToHom tdiff ≫ u') :=  cartesianMorphismToCartLift'' (help) (X.2 morph (automaticallyCart morph))
-          let lY : cartesianLiftOfAlong (E_obj_obj Y) u'  := cartesianMorphismToCartLift'' (by rw [rwFuncComp Y] ; rfl) (Y.2 morph (automaticallyCart morph))
-
-          exact (lY.2 (eqToHom tdiff) ⟨  _ , over_comp (by rw [Category.comp_id]) (coercBack f) lX.φ  ⟩).choose.1
+  : ∃! ψ : over_hom (P:=P.1.hom) compPath (equivOnFibersFullCartSrc f u).Y (equivOnFibersFullCartTrg f u).Y,
+    ψ.1 ≫ (equivOnFibersFullCartTrg f u).φ.1 = (over_comp (by rw [Category.comp_id]) (coercBack f) (equivOnFibersFullCartSrc f u).φ ).1 :=  -- X.1.left.obj u ⟶ Y.1.left.obj u := by ----
+          (equivOnFibersFullCartTrg f u).2 compPath ⟨  _ , over_comp (by rw [Category.comp_id]) (coercBack f) (equivOnFibersFullCartSrc f u).φ⟩
 
 
-/-
 
+notation "⟪ " v "  ⟫" => (morphismToLift (P:=(fundamentalFibration.obj I).1.hom) v).φ
+notation f ">[" comm "]>" g => over_comp comm g f
+notation f ">>" g => over_hom_comp g f
 theorem equivOnFibers : IsEquivalence E := by
 
 
@@ -112,16 +123,28 @@ theorem equivOnFibers : IsEquivalence E := by
 
       · apply NatTrans.mk ; swap
         · intro u
-          apply equivOnFibersFull f u
+          exact (equivOnFibersFull f u).choose.1
         · intro uv u v ;
-          sorry
+          /-
+          lemma liftFromCartesiannessIsUnique  {P : fibration B} {J I : B} {X  : P[I]} {Y : P [J]} {u : J ⟶ I}
+  {C : liftOfAlong X u} (isw : isWeakCartesian C) {f f' : Y ⟶ C.Y} (p : f.1 ≫ C.φ.1 = f'.1 ≫ C.φ.1) : f = f' := by
+
+          -/
+          let Yv : over_hom v.left ⟨ Y.1.left.obj uv , rfl⟩ ⟨ Y.1.left.obj u , rfl⟩ := ⟨ Y.1.left.map v , by sorry ⟩
+          --have p : v.left ≫ compPath = compPath ≫ v.left := by sorry
+          let mor1 := ((equivOnFibersFull f uv).choose >> mappingOverHom Y ⟪ v ⟫)
+          have : (mappingOverHom X ⟪ v ⟫  >[ by sorry]> (equivOnFibersFull f u).choose)
+            = mor1 := by
+            apply liftFromCartesiannessIsUnique (weakCartifCartesian (equivOnFibersFullCartTrg f u)) sorry
+
           --apply Subtype.ext
 
       · intro A T
         sorry
 
     · sorry
-
+  sorry
+/-
   have essSurj : EssSurj E := by
     constructor
     intro X
