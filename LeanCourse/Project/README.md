@@ -1,3 +1,36 @@
+## Remarks
+
+Important: i added some remarks (search for the word Remark)
+
+My basis was : https://www2.mathematik.tu-darmstadt.de/~streicher/FIBR/FiBo.pdf
+What did I show?
+
+
+Firstly, the main goal was
+  · a functor Sp : fibration B ⥤ splitFibration B
+  · equipped with an equivalence of fibrations E: Sp P ⥤c P, which means a cartesian functor which has a pseudo cartesian inverse (i.e. an equivalence in the bicategory of fibrations)
+    (because then, which i tried to formalize, it reflects cartesian morphisms,
+    which is almost as good as having a cartesian quasi-inverse functor P ⥤c Sp P)
+
+The functor Sp factors as
+  psh ≫ Grothendieck : fibration B ⥤ PShCat B ⥤ splitFibration B
+  where the first map is P ↦ Fib(fundamentalfibration · , P)
+  so we have to pull back the yoneda embedding at P along a functor
+    fundamentalFibration : B ⥤ fibration B
+Sorries:
+-I didnt implemented the whole bicategory structure of fibrations although it should not be difficult.
+-There should only be relevant sorries in SplitFibrationViaGrothendieck,
+  I underestimated the complexity of showing that the Grothendieck construction associated to a presheaf of categories is a split fibration.
+  Furthermore there are some lemmas associated to this construction that are not completely proven
+-Sidenote:
+  Secondly, In the file PresheavesOfCategories, I constructed a functor
+
+  splitfibration B ⥤ PShCat B , which is of independent interest.
+  So i constructed functors in both directions PShCat B ⥤ splitFibration.
+  Originally i wanted to show, that this is a strong equivalence of 2-categories whose inverse is given by the grothendieck construction
+  (which i also implemented)
+  Here some things are missing
+
 ## Personal Info
 
 Please fill out the following:
